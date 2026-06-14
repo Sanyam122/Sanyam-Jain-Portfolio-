@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+
+button, input, .element {
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Improve typography */
+h1, h2, h3 {
+  font-size: 24px;
+  line-height: 1.5;
+  font-weight: bold;
+}
+
+body {
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* Add transitions and animations */
+button:hover {
+  background-color: #ccc;
+  transition: background-color 0.2s ease-in-out;
+}
+
+/* Use gradients */
+.button {
+  background-image: linear-gradient(to bottom, #fff, #ccc);
+}
