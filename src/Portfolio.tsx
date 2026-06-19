@@ -47,6 +47,7 @@ const LinkedInIcon = ({ size = 20 }: { size?: number }) => (
 
 interface Project {
   id: number;
+  Live?: string;
   title: string;
   desc: string;
 }
@@ -117,11 +118,12 @@ const PROJECTS_DATA: Project[] = [
   {
     id: 1,
     title: "AI Helpdesk System",
-    desc: "Built a smart AI-powered helpdesk platform using MERN stack with chatbot assistance and authentication.",
+    desc: "Built a smart AI-powered helpdesk platform using MERN stack with chatbot assistance and authentication. To be live soon, connect with me on LinkedIn to get updated.",
   },
   {
     id: 2,
     title: "StayHub",
+    Live: "https://stayhub-dgq1.onrender.com/listings",
     desc: "A travel guide built for frequent travelers, providing curated recommendations with interactive maps and user reviews.",
   },
   {
@@ -132,31 +134,13 @@ const PROJECTS_DATA: Project[] = [
 ];
 
 const SKILLS_DATA: string[] = [
-  "HTML5",
-  "CSS3",
-  "JavaScript",
-  "TypeScript",
-  "React JS",
-  "Next.js",
-  "Node.js",
-  "Express.js",
-  "MongoDB",
-  "Mongoose",
-  "REST APIs",
-  "Tailwind CSS",
-  "Bootstrap",
-  "JWT Authentication",
-  "Firebase",
-  "Git & GitHub",
-  "Responsive Design",
-  "API Integration",
-  "UI/UX Design using AI ",
-  "Performance Optimization",
-  "Postman",
-  "Vite",
-  "Java",
-  "Data Structures",
-  "Algorithms",
+"HTML",
+"CSS",
+"JavaScript",
+"TypeScript",
+"React JS",
+"BootStrap",
+"Data Structures And Algorithms",
 ];
 
 /* =========================================
@@ -274,12 +258,14 @@ SkillCard.displayName = "SkillCard";
 
 const ProjectCard = memo(({ project }: { project: Project }) => (
   <div className='curve-surface relative overflow-hidden transform-gpu bg-white/90 backdrop-blur-md rounded-[36px] p-6 shadow-[0_22px_55px_rgba(15,23,42,0.08)] hover:-translate-y-3 hover:shadow-[0_30px_80px_rgba(14,165,233,0.18)] transition-all duration-500 group hover:scale-[1.02] border border-white/80'>
-    <div className='absolute -right-12 -top-12 h-36 w-36 rounded-full bg-sky-300/20 blur-2xl opacity-0 transition-opacity duration-500 group-hover:opacity-100' />
-    <div className='relative h-44 rounded-[30px] bg-gradient-to-br from-sky-50 via-white to-blue-100 flex items-center justify-center text-sky-600 font-bold text-xl mb-6 text-center px-4 group-hover:scale-105 transition-transform duration-500 shadow-inner'>
-      {project.title}
-    </div>
-    <h3 className='relative text-2xl font-semibold mb-3'>{project.title}</h3>
-    <p className='relative text-gray-500 leading-8'>{project.desc}</p>
+    <a href={project.Live}>
+      <div className='absolute -right-12 -top-12 h-36 w-36 rounded-full bg-sky-300/20 blur-2xl opacity-0 transition-opacity duration-500 group-hover:opacity-100' />
+      <div className='relative h-44 rounded-[30px] bg-gradient-to-br from-sky-50 via-white to-blue-100 flex items-center justify-center text-sky-600 font-bold text-xl mb-6 text-center px-4 group-hover:scale-105 transition-transform duration-500 shadow-inner'>
+        {project.title}
+      </div>
+      <h3 className='relative text-2xl font-semibold mb-3'>{project.title}</h3>
+      <p className='relative text-gray-500 leading-8'>{project.desc}</p>
+    </a>
   </div>
 ));
 ProjectCard.displayName = "ProjectCard";
