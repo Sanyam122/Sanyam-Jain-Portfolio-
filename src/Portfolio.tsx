@@ -641,7 +641,7 @@ export default function Portfolio() {
                 </p>
                 <button className='transform-gpu mt-8 px-8 py-4 rounded-full bg-gradient-to-r from-sky-400 to-blue-600 text-white font-semibold shadow-[0_16px_36px_rgba(14,165,233,0.28)] hover:-translate-y-1 hover:scale-105 hover:shadow-[0_22px_55px_rgba(14,165,233,0.34)] active:scale-95 transition-all duration-300 relative z-10 flex items-center gap-2'>
                   <Briefcase size={18} />
-                  Hire Me
+                  Connect with me.
                 </button>
               </div>
 
