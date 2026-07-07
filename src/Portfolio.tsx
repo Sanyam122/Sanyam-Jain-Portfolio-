@@ -84,18 +84,18 @@ const SOCIAL_ICONS: { label: string; icon: React.ReactNode; href: string }[] = [
 
 const FEATURE_CARDS = [
   {
-    title: "AI Helpdesk System",
-    role: "Full Stack Project",
+    title: "Responsive UI",
+    role: "Full Stack Developer",
     icon: <Sparkles size={28} />,
   },
   {
-    title: "Responsive UI/UX",
-    role: "Frontend Developer",
+    title: "Problem Solving",
+    role: "Solved 100+ LeetCode Problems",
     icon: <Layout size={28} />,
   },
   {
-    title: "MERN Stack Apps",
-    role: "React JS Developer",
+    title: "MERN Stack Web Apps",
+    role: "Full Stack Developer",
     icon: <Code2 size={28} />,
   },
 ];
@@ -128,8 +128,9 @@ const PROJECTS_DATA: Project[] = [
   },
   {
     id: 3,
-    title: "Weather App",
-    desc: "Created a responsive weather application with real-time data integration and a clean UI.",
+    title: "WeatherIQ",
+    Live : "https://weather-app-sanyam122s-projects.vercel.app/",
+    desc: "A weather application build using React and Tailwind CSS, allowing users to see only the necessary data at a glance.",
   },
 ];
 
