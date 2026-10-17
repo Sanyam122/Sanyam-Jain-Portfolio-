@@ -50,23 +50,25 @@ button:focus-visible {
   outline-offset: 3px;
 }
 
-/* ============ MOTION SYSTEM ============ */
+/* ============ MOTION SYSTEM (same as code.html) ============ */
 :root {
-  --ease-expo: cubic-bezier(.16, 1, .3, 1);
-  --ease-quart: cubic-bezier(.25, 1, .5, 1);
-  /* Fallback springs; real springs replace them below where linear() is supported */
-  --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
+  --ease-expo: cubic-bezier(.16, 1, .3, 1);      /* long, silky deceleration */
+  --ease-quart: cubic-bezier(.25, 1, .5, 1);     /* softer settle for opacity */
+  --ease-spring: cubic-bezier(.34, 1.56, .64, 1); /* tiny overshoot, used sparingly */
+
+  /* Island-only spring (the dynamic island and its sliding pill use this; unchanged) */
   --ease-spring-soft: cubic-bezier(.22, 1.2, .36, 1);
+  --ease-island: cubic-bezier(.22, 1, .36, 1); /* silky island morph */
 }
 @supports (transition-timing-function: linear(0, 1)) {
   :root {
-    /* snappy: ~10% overshoot, for small objects (icons, buttons) */
-    --ease-spring: linear(0, 0.0281, 0.1012, 0.2042, 0.3239, 0.4499, 0.5737, 0.6893, 0.7925, 0.881, 0.9536, 1.0105, 1.0526, 1.0813, 1.0984, 1.106, 1.106, 1.1003, 1.0906, 1.0786, 1.0653, 1.0519, 1.039, 1.0273, 1.0171, 1.0085, 1.0016, 0.9964, 0.9926, 0.9902, 0.989, 0.9886, 0.9889, 0.9898, 0.991, 0.9923, 1);
-    /* soft: ~1.5% overshoot, for large surfaces (the island, cards) */
+    --ease-island: linear(0, 0.0222, 0.0778, 0.1537, 0.2399, 0.3296, 0.4179, 0.5015, 0.5786, 0.648, 0.7093, 0.7627, 0.8085, 0.8473, 0.8798, 0.9067, 0.9286, 0.9464, 0.9605, 0.9717, 0.9804, 0.9871, 0.9921, 0.9958, 0.9985, 1.0004, 1.0016, 1.0024, 1.0028, 1.003, 1.0029, 1.0028, 1.0026, 1.0024, 1.0021, 1.0018, 1.0016, 1.0013, 1.0011, 1.0009, 1);
+    /* soft: ~1.5% overshoot, for the island */
     --ease-spring-soft: linear(0, 0.0159, 0.0575, 0.1168, 0.1875, 0.2645, 0.3438, 0.4225, 0.4982, 0.5695, 0.6354, 0.6952, 0.7488, 0.796, 0.8372, 0.8727, 0.9028, 0.9281, 0.949, 0.966, 0.9796, 0.9903, 0.9986, 1.0047, 1.0091, 1.0121, 1.014, 1.0149, 1.0152, 1.0149, 1.0142, 1.0133, 1.0122, 1.0111, 1.0099, 1.0087, 1);
   }
 }
 
+/* Scrolling is handled by JS (eased glide). Native smooth stays as a no-JS fallback. */
 html {
   scroll-behavior: auto;
 }
@@ -78,10 +80,6 @@ html:not(.js) {
 @keyframes marquee {
   0% { transform: translateX(0%); }
   100% { transform: translateX(-50%); }
-}
-.marquee-wrap {
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent);
 }
 .animate-marquee {
   display: flex;
@@ -95,13 +93,13 @@ html:not(.js) {
   padding-right: 2.5rem;
 }
 .marquee-wrap:hover .animate-marquee {
-  animation-play-state: paused;
+  animation-play-state: paused; /* no-JS fallback */
 }
 .animate-marquee.is-js {
-  animation: none;
+  animation: none; /* JS drives it with easing */
 }
 
-/* ---------- Nav underline (island replaces it with a sliding pill) ---------- */
+/* ---------- Nav underline: wipes in from the left, exits to the right (island replaces it with a sliding pill) ---------- */
 .nav-link {
   position: relative;
 }
@@ -116,7 +114,7 @@ html:not(.js) {
   background: #2F9FB3;
   transform: scaleX(0);
   transform-origin: right;
-  transition: transform 0.7s var(--ease-expo);
+  transition: transform 1.2s var(--ease-expo);
 }
 .nav-link:hover::after,
 .nav-link.active::after {
@@ -127,7 +125,7 @@ html:not(.js) {
   color: #222222;
 }
 
-/* ============ DYNAMIC ISLAND NAVBAR ============
+/* ============ DYNAMIC ISLAND NAVBAR (unchanged) ============
    data-island="top"      wide light-glass pill at the top of the page
    data-island="compact"  dark island hugging its content (scrolling down)
    data-island="expanded" dark island sprung open (scroll up / hover / focus)
@@ -196,15 +194,16 @@ header.island:is([data-island="compact"], [data-island="expanded"]) {
 /* One transition list for the island, merged with the reveal entrance so neither cancels the other */
 .js header.island,
 .js header.island.reveal {
+  will-change: width, padding, background-color;
   transition:
-    opacity 1s var(--ease-quart) var(--d, 0ms),
-    translate 1.2s var(--ease-expo) var(--d, 0ms),
-    scale 1.2s var(--ease-expo) var(--d, 0ms),
-    filter 1s var(--ease-quart) var(--d, 0ms),
-    width 1s var(--ease-spring-soft),
-    padding 0.7s var(--ease-expo),
-    background-color 0.6s var(--ease-quart),
-    box-shadow 0.7s var(--ease-expo);
+    opacity 1.5s var(--ease-quart) var(--d, 0ms),
+    translate 1.7s var(--ease-expo) var(--d, 0ms),
+    scale 1.7s var(--ease-expo) var(--d, 0ms),
+    filter 1.5s var(--ease-quart) var(--d, 0ms),
+    width 1.6s var(--ease-island),
+    padding 1.3s var(--ease-island),
+    background-color 1.1s var(--ease-quart),
+    box-shadow 1.2s var(--ease-quart);
 }
 header.island.no-trans,
 header.island.no-trans * {
@@ -216,7 +215,7 @@ header.island.is-measuring {
 
 /* Colours: text follows the island's surface, softly */
 header.island :where(a, span, p, li) {
-  transition: color 0.5s var(--ease-quart);
+  transition: color 0.9s var(--ease-quart);
 }
 header.island:is([data-island="compact"], [data-island="expanded"]) :where(a, span, p, li, svg) {
   color: var(--fg);
@@ -264,11 +263,11 @@ header.island .nav-link::after {
 }
 .nav-pill.is-ready {
   transition:
-    translate 0.6s var(--ease-spring-soft),
-    width 0.6s var(--ease-spring-soft),
-    height 0.6s var(--ease-spring-soft),
-    opacity 0.35s var(--ease-quart),
-    background-color 0.5s var(--ease-quart);
+    translate 0.95s var(--ease-spring-soft),
+    width 0.95s var(--ease-spring-soft),
+    height 0.95s var(--ease-spring-soft),
+    opacity 0.6s var(--ease-quart),
+    background-color 0.9s var(--ease-quart);
 }
 
 /* Scroll progress, drawn along the island's lower edge once it goes dark */
@@ -285,7 +284,7 @@ header.island::after {
   transform: scaleX(var(--p, 0));
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.6s var(--ease-quart);
+  transition: opacity 1.1s var(--ease-quart);
 }
 header.island:is([data-island="compact"], [data-island="expanded"])::after {
   opacity: 0.9;
@@ -300,20 +299,21 @@ header.island:is([data-island="compact"], [data-island="expanded"])::after {
     padding-left: 18px;
   }
 }
+/* ============ END DYNAMIC ISLAND NAVBAR ============ */
 
-/* ---------- Scroll / load reveal ---------- */
+/* ---------- Scroll / load reveal (only when JS runs, so content never stays hidden) ---------- */
 .js .reveal {
   opacity: 0;
   translate: 0 var(--y, 32px);
   scale: var(--s, 1);
   transition:
-    opacity 1s var(--ease-quart) var(--d, 0ms),
-    translate 1.2s var(--ease-expo) var(--d, 0ms),
-    scale 1.2s var(--ease-expo) var(--d, 0ms),
-    filter 1s var(--ease-quart) var(--d, 0ms),
-    transform 0.8s var(--ease-spring-soft),
-    box-shadow 0.8s var(--ease-expo),
-    background-color 0.3s ease;
+    opacity 1.5s var(--ease-quart) var(--d, 0ms),
+    translate 1.7s var(--ease-expo) var(--d, 0ms),
+    scale 1.7s var(--ease-expo) var(--d, 0ms),
+    filter 1.5s var(--ease-quart) var(--d, 0ms),
+    transform 1.3s var(--ease-expo),
+    box-shadow 1.3s var(--ease-expo),
+    background-color 0.8s ease;
 }
 .js .reveal[data-blur] {
   filter: blur(8px);
@@ -328,7 +328,7 @@ header.island:is([data-island="compact"], [data-island="expanded"])::after {
   will-change: opacity, translate, scale;
 }
 
-/* ---------- Headline words ---------- */
+/* ---------- Headline words: rise out of a mask ---------- */
 .w {
   display: inline-block;
   overflow: hidden;
@@ -344,39 +344,38 @@ header.island:is([data-island="compact"], [data-island="expanded"])::after {
   opacity: 0;
   transform: translate3d(0, 112%, 0) rotate(5deg);
   transition:
-    transform 1.3s var(--ease-expo) calc(var(--d, 0ms) + var(--i, 0) * var(--step, 55ms)),
-    opacity 0.8s var(--ease-quart) calc(var(--d, 0ms) + var(--i, 0) * var(--step, 55ms));
+    transform 1.8s var(--ease-expo) calc(var(--d, 0ms) + var(--i, 0) * var(--step, 55ms)),
+    opacity 1.3s var(--ease-quart) calc(var(--d, 0ms) + var(--i, 0) * var(--step, 55ms));
 }
 .js [data-split].in .wi {
   opacity: 1;
   transform: none;
 }
 
-/* ---------- Mission text ---------- */
+/* ---------- Mission text: words light up with scroll ---------- */
 .sw {
-  transition: opacity 0.6s var(--ease-quart);
+  transition: opacity 1.1s var(--ease-quart);
 }
 
-/* ---------- Images ---------- */
+/* ---------- Images: settle in once, then slow zoom on hover ---------- */
 .media-img {
-  transition: transform 1.4s var(--ease-expo);
+  transition: transform 1.9s var(--ease-expo);
 }
 .js .media-img {
   scale: 1.14;
   transition:
-    scale 1.9s var(--ease-expo) calc(var(--d, 0ms) + 150ms),
-    transform 1.4s var(--ease-expo);
+    scale 2.4s var(--ease-expo) calc(var(--d, 0ms) + 150ms),
+    transform 1.9s var(--ease-expo);
 }
 .js .reveal.in .media-img {
   scale: none;
 }
 
-/* ---------- Cards ---------- */
+/* ---------- Cards: lift on hover (hit-area extension prevents edge flicker) ---------- */
 .card-lift {
   position: relative;
-  isolation: isolate;
 }
-/* bridge so the lift never flickers at the card's lower edge */
+
 .card-lift::after {
   content: "";
   position: absolute;
@@ -385,29 +384,10 @@ header.island:is([data-island="compact"], [data-island="expanded"])::after {
   bottom: -8px;
   height: 8px;
 }
-/* cursor spotlight (position set from JS) */
-.card-lift::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  z-index: -1;
-  opacity: 0;
-  background: radial-gradient(
-    380px circle at var(--mx, 50%) var(--my, 50%),
-    rgba(47, 159, 179, 0.1),
-    transparent 70%
-  );
-  transition: opacity 0.7s var(--ease-quart);
-}
 @media (hover: hover) {
   .card-lift:hover {
-    transform: translateY(-5px);
+    transform: translateY(-4px);
     box-shadow: 0 28px 56px -30px rgba(34, 34, 34, 0.32);
-  }
-  .card-lift:hover::before {
-    opacity: 1;
   }
   .card-lift:hover .media-img,
   .zoom-host:hover .media-img {
@@ -415,14 +395,14 @@ header.island:is([data-island="compact"], [data-island="expanded"])::after {
   }
 }
 
-/* ---------- Buttons (JS drives `translate` for the magnetic pull, so it is never transitioned) ---------- */
+/* ---------- Buttons: soft magnetic pull + press ---------- */
 .btn {
   transition:
-    scale 0.7s var(--ease-spring),
-    background-color 0.4s ease,
-    color 0.4s ease,
-    box-shadow 0.6s var(--ease-expo),
-    opacity 0.3s ease;
+    translate 1.3s var(--ease-expo),
+    scale 1.1s var(--ease-expo),
+    background-color 0.9s ease,
+    box-shadow 1.1s var(--ease-expo),
+    opacity 0.8s ease;
 }
 @media (hover: hover) {
   .btn:hover {
@@ -435,7 +415,7 @@ header.island:is([data-island="compact"], [data-island="expanded"])::after {
 }
 .btn:active {
   scale: 0.97;
-  transition-duration: 0.2s, 0.4s, 0.4s, 0.6s, 0.3s;
+  transition-duration: 1.3s, 0.7s, 0.9s, 1.1s, 0.8s;
 }
 .btn-wide:active {
   scale: 0.99;
@@ -446,12 +426,12 @@ header.island:is([data-island="compact"], [data-island="expanded"])::after {
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.18);
 }
 
-/* ---------- Social icons ---------- */
+/* ---------- Social icons: spring hover + staggered pop-in ---------- */
 .icon-btn {
   transition:
-    transform 0.8s var(--ease-spring),
-    box-shadow 0.6s var(--ease-expo),
-    background-color 0.4s ease;
+    transform 1.2s var(--ease-spring),
+    box-shadow 1.1s var(--ease-expo),
+    background-color 0.9s ease;
 }
 @media (hover: hover) {
   .icon-btn:hover {
@@ -464,16 +444,16 @@ header.island:is([data-island="compact"], [data-island="expanded"])::after {
 }
 .js .reveal.icon-btn {
   transition:
-    opacity 0.8s var(--ease-quart),
-    translate 1.1s var(--ease-spring),
-    scale 1.1s var(--ease-spring),
-    transform 0.8s var(--ease-spring),
-    box-shadow 0.6s var(--ease-expo),
-    background-color 0.4s ease;
+    opacity 1.3s var(--ease-quart),
+    translate 1.5s var(--ease-spring),
+    scale 1.5s var(--ease-spring),
+    transform 1.2s var(--ease-spring),
+    box-shadow 1.1s var(--ease-expo),
+    background-color 0.9s ease;
   transition-delay: var(--d, 0ms), var(--d, 0ms), var(--d, 0ms), 0ms, 0ms, 0ms;
 }
 
-/* ---------- Availability dot ---------- */
+/* ---------- Availability dot: soft expanding ring ---------- */
 .status-dot {
   position: relative;
 }
@@ -483,17 +463,17 @@ header.island:is([data-island="compact"], [data-island="expanded"])::after {
   inset: 0;
   border-radius: inherit;
   background: #2F9FB3;
-  animation: dot-ring 2.6s var(--ease-quart) infinite;
+  animation: dot-ring 3.1s var(--ease-quart) infinite;
 }
 @keyframes dot-ring {
   0% { transform: scale(1); opacity: 0.5; }
   75%, 100% { transform: scale(3.4); opacity: 0; }
 }
 
-/* ---------- Footer links ---------- */
+/* ---------- Footer links: underline sweep ---------- */
 .foot-link {
   position: relative;
-  transition: color 0.4s ease;
+  transition: color 0.9s ease;
 }
 .foot-link::after {
   content: "";
@@ -505,7 +485,7 @@ header.island:is([data-island="compact"], [data-island="expanded"])::after {
   background: currentColor;
   transform: scaleX(0);
   transform-origin: right;
-  transition: transform 0.7s var(--ease-expo);
+  transition: transform 1.2s var(--ease-expo);
 }
 .foot-link:hover::after {
   transform: scaleX(1);
@@ -515,10 +495,10 @@ header.island:is([data-island="compact"], [data-island="expanded"])::after {
 /* ---------- Form ---------- */
 .field {
   transition:
-    background-color 0.5s var(--ease-quart),
-    box-shadow 0.6s var(--ease-expo),
-    border-color 0.5s ease,
-    transform 0.6s var(--ease-expo);
+    background-color 1s var(--ease-quart),
+    box-shadow 1.1s var(--ease-expo),
+    border-color 1s ease,
+    transform 1.1s var(--ease-expo);
 }
 .field:focus {
   background-color: rgba(255, 255, 255, 0.88);
@@ -530,14 +510,14 @@ header.island:is([data-island="compact"], [data-island="expanded"])::after {
   to { opacity: 1; transform: none; filter: none; }
 }
 .pop {
-  animation: pop 0.7s var(--ease-expo) both;
+  animation: pop 1.2s var(--ease-expo) both;
 }
 @keyframes swap {
   from { opacity: 0; filter: blur(3px); }
   to { opacity: 1; filter: none; }
 }
 .swap {
-  animation: swap 0.5s var(--ease-quart) both;
+  animation: swap 1s var(--ease-quart) both;
 }
 @keyframes spin {
   to { transform: rotate(360deg); }

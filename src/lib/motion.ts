@@ -6,9 +6,6 @@ type RevealElement = HTMLElement & {
   _o?: number;
 };
 
-/** Set to false to keep the browser's native wheel scrolling. */
-const SMOOTH_WHEEL = true;
-
 const $ = (s: string, r: Document | Element = document): Element | null =>
   r.querySelector(s);
 
@@ -18,10 +15,8 @@ const $$ = (s: string, r: Document | Element = document): Element[] =>
 const clamp = (n: number, lo: number, hi: number) =>
   Math.min(hi, Math.max(lo, n));
 
-const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-
-const easeInOutCubic = (t: number) =>
-  t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const easeInOutQuart = (t: number) =>
+  t < 0.5 ? 8 * t * t * t * t : 1 - Math.pow(-2 * t + 2, 4) / 2;
 
 type IslandState = 'top' | 'compact' | 'expanded';
 
@@ -44,12 +39,12 @@ export function initMotion(): () => void {
   initialized = true;
 
   const root = document.documentElement;
-  root.classList.add('js');
+  root.classList.add("js");
 
-  const hasIO = 'IntersectionObserver' in window;
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const finePointer = matchMedia('(hover: hover) and (pointer: fine)').matches;
-  if (reduce) root.classList.add('no-motion');
+  const hasIO = "IntersectionObserver" in window;
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const finePointer = matchMedia("(hover: hover) and (pointer: fine)").matches;
+  if (reduce) root.classList.add("no-motion");
 
   /* ---------- Shared plumbing ---------- */
   const cleanups: (() => void)[] = [];
@@ -70,7 +65,6 @@ export function initMotion(): () => void {
   });
 
   let glide = 0; // rAF id of the active anchor glide (0 = idle)
-  let stopWheel: () => void = () => {}; // halts wheel smoothing (set below)
   let syncPill: () => void = () => {}; // re-places the nav pill (set below)
 
   /* One scroll/resize listener, one rAF per frame, shared by every scroll-driven effect */
@@ -90,11 +84,11 @@ export function initMotion(): () => void {
   const onScrollFrame = (fn: (y: number) => void) => {
     scrollSubs.push(fn);
   };
-  addEventListener('scroll', hubRequest, { passive: true });
-  addEventListener('resize', hubRequest);
+  addEventListener("scroll", hubRequest, { passive: true });
+  addEventListener("resize", hubRequest);
   addCleanup(() => {
-    removeEventListener('scroll', hubRequest);
-    removeEventListener('resize', hubRequest);
+    removeEventListener("scroll", hubRequest);
+    removeEventListener("resize", hubRequest);
     scrollSubs.length = 0;
   });
 
@@ -103,14 +97,14 @@ export function initMotion(): () => void {
     document.fonts && document.fonts.load
       ? Promise.race([
           Promise.all([
-            document.fonts.load('500 1em Inter'),
-            document.fonts.load('600 1em Inter'),
+            document.fonts.load("500 1em Inter"),
+            document.fonts.load("600 1em Inter"),
           ]).catch(() => {}),
           new Promise<void>((r) => setTimeout(r, 700)),
         ])
       : Promise.resolve();
   const ready = fontGate.then(
-    () => new Promise<void>((r) => requestAnimationFrame(() => r()))
+    () => new Promise<void>((r) => requestAnimationFrame(() => r())),
   );
 
   /* ---------- Reveal engine ---------- */
@@ -129,23 +123,22 @@ export function initMotion(): () => void {
             const delay = Math.round(
               el._init
                 ? (el._plan ?? 0)
-                : (el._lag ?? 0) + n++ * (el._gap ?? 0)
+                : (el._lag ?? 0) + n++ * (el._gap ?? 0),
             );
-            el.style.setProperty('--d', delay + 'ms');
-            el.classList.add('in');
+            el.style.setProperty("--d", delay + "ms");
+            el.classList.add("in");
             obs.unobserve(el);
-            later(() => el.classList.add('done'), delay + 1900);
+            later(() => el.classList.add("done"), delay + 2300);
           });
         },
-        // threshold 0 so very tall blocks can never get stuck invisible
-        { threshold: 0, rootMargin: '0px 0px -8% 0px' }
+        { threshold: 0.12, rootMargin: "0px 0px -6% 0px" },
       )
     : null;
 
   const queue = (el: Element) => {
     ready.then(() => {
       if (!io) {
-        el.classList.add('in', 'done');
+        el.classList.add("in", "done");
         return;
       }
       const r = el.getBoundingClientRect();
@@ -171,7 +164,7 @@ export function initMotion(): () => void {
       y?: string;
       s?: string;
       blur?: boolean;
-    } = {}
+    } = {},
   ) {
     const list: Element[] = !targets
       ? []
@@ -179,11 +172,11 @@ export function initMotion(): () => void {
         ? targets
         : [targets];
     list.forEach((el, i) => {
-      el.classList.add('reveal');
+      el.classList.add("reveal");
       const elStyle = el as HTMLElement;
-      if (y !== undefined) elStyle.style.setProperty('--y', y);
-      if (s !== undefined) elStyle.style.setProperty('--s', s);
-      if (blur) el.setAttribute('data-blur', '');
+      if (y !== undefined) elStyle.style.setProperty("--y", y);
+      if (s !== undefined) elStyle.style.setProperty("--s", s);
+      if (blur) el.setAttribute("data-blur", "");
       const revealEl = el as RevealElement;
       revealEl._plan = base + i * step;
       revealEl._lag = lag;
@@ -204,25 +197,25 @@ export function initMotion(): () => void {
       step?: number;
       lag?: number;
       gap?: number;
-    } = {}
+    } = {},
   ) {
     if (!el) return;
     const nodes = Array.from(el.childNodes);
     el.setAttribute(
-      'aria-label',
+      "aria-label",
       nodes
-        .map((n) => (n.nodeName === 'BR' ? ' ' : n.textContent))
-        .join('')
+        .map((n) => (n.nodeName === "BR" ? " " : n.textContent))
+        .join("")
         .trim()
-        .replace(/\s+/g, ' ')
+        .replace(/\s+/g, " "),
     );
-    el.setAttribute('data-split', '');
-    el.textContent = '';
+    el.setAttribute("data-split", "");
+    el.textContent = "";
     let i = 0;
     let needSpace = false;
     nodes.forEach((node) => {
-      if (node.nodeName === 'BR') {
-        el.appendChild(document.createElement('br'));
+      if (node.nodeName === "BR") {
+        el.appendChild(document.createElement("br"));
         needSpace = false;
         return;
       }
@@ -230,20 +223,20 @@ export function initMotion(): () => void {
         ?.split(/\s+/)
         .filter(Boolean)
         .forEach((word) => {
-          if (needSpace) el.appendChild(document.createTextNode(' '));
-          const w = document.createElement('span');
-          w.className = 'w';
-          w.setAttribute('aria-hidden', 'true');
-          const inner = document.createElement('span');
-          inner.className = 'wi';
-          inner.style.setProperty('--i', String(i++));
+          if (needSpace) el.appendChild(document.createTextNode(" "));
+          const w = document.createElement("span");
+          w.className = "w";
+          w.setAttribute("aria-hidden", "true");
+          const inner = document.createElement("span");
+          inner.className = "wi";
+          inner.style.setProperty("--i", String(i++));
           inner.textContent = word;
           w.appendChild(inner);
           el.appendChild(w);
           needSpace = true;
         });
     });
-    (el as HTMLElement).style.setProperty('--step', step + 'ms');
+    (el as HTMLElement).style.setProperty("--step", step + "ms");
     const revealEl = el as RevealElement;
     revealEl._plan = base;
     revealEl._lag = lag;
@@ -255,29 +248,31 @@ export function initMotion(): () => void {
      so quick flicks of the wheel never make the text strobe. */
   function scrubWords(el: Element | null) {
     if (!el) return;
-    const text = (el.textContent ?? '').trim().replace(/\s+/g, ' ');
-    el.setAttribute('aria-label', text);
-    el.textContent = '';
-    const parts = text.split(' ');
+    const text = (el.textContent ?? "").trim().replace(/\s+/g, " ");
+    el.setAttribute("aria-label", text);
+    el.textContent = "";
+    const parts = text.split(" ");
     const words = parts.map((word, i) => {
-      const s = document.createElement('span');
-      s.className = 'sw';
-      s.setAttribute('aria-hidden', 'true');
+      const s = document.createElement("span");
+      s.className = "sw";
+      s.setAttribute("aria-hidden", "true");
       s.textContent = word;
       el.appendChild(s);
-      if (i < parts.length - 1) el.appendChild(document.createTextNode(' '));
+      if (i < parts.length - 1) el.appendChild(document.createTextNode(" "));
       return s;
     });
     const tail = 5;
     const n = words.length;
-    let target = 0;
-    let current = 0;
-    let raf = 0;
-
-    const paint = (p: number) => {
+    const update = () => {
+      const r = el.getBoundingClientRect();
+      const p = clamp(
+        (innerHeight * 0.88 - r.top) / (r.height + innerHeight * 0.28),
+        0,
+        1,
+      );
       words.forEach((w, i) => {
         const v = clamp((p * (n + tail) - i) / tail, 0, 1);
-        const o = Number((0.18 + 0.82 * v * v * (3 - 2 * v)).toFixed(2));
+        const o = Number((0.2 + 0.8 * v).toFixed(2));
         const we = w as RevealElement;
         if (we._o !== o) {
           we._o = o;
@@ -285,135 +280,112 @@ export function initMotion(): () => void {
         }
       });
     };
-    const measure = () => {
-      const r = el.getBoundingClientRect();
-      return clamp(
-        (innerHeight * 0.88 - r.top) / (r.height + innerHeight * 0.28),
-        0,
-        1
-      );
-    };
-    const run = () => {
-      current = lerp(current, target, 0.14);
-      if (Math.abs(target - current) < 0.0008) {
-        current = target;
-        raf = 0;
-      } else {
-        raf = requestAnimationFrame(run);
-      }
-      paint(current);
-    };
-    onScrollFrame(() => {
-      target = measure();
-      if (!raf) raf = requestAnimationFrame(run);
-    });
-    addCleanup(() => cancelAnimationFrame(raf));
-    target = current = measure();
-    paint(current);
+    onScrollFrame(update);
+    update();
   }
 
   if (!reduce) {
     try {
       /* ---------- Header + hero: one orchestrated entrance ---------- */
-      reveal($('header'), { y: '-20px', s: '.96' });
-      const heroLeft = $('#hero > div:first-child');
-      splitWords(heroLeft ? $('h1', heroLeft) : null, { base: 260, step: 80 });
-      reveal(heroLeft?.querySelector('.space-y-8 > div'), {
-        base: 140,
-        y: '16px',
+      reveal($("header"), { y: "-24px", s: ".985" });
+      const heroLeft = $("#hero > div:first-child");
+      splitWords(heroLeft ? $("h1", heroLeft) : null, { base: 240, step: 80 });
+      reveal(heroLeft?.querySelector(".space-y-8 > div"), {
+        base: 120,
+        y: "20px",
         blur: true,
       });
-      reveal(heroLeft?.querySelector('.space-y-8 > p'), {
-        base: 800,
+      reveal(heroLeft?.querySelector(".space-y-8 > p"), {
+        base: 780,
         lag: 150,
-        y: '20px',
+        y: "24px",
         blur: true,
       });
-      reveal(heroLeft?.querySelector(':scope > .pt-8'), {
-        base: 940,
+      reveal(heroLeft?.querySelector(":scope > .pt-8"), {
+        base: 920,
         lag: 250,
-        y: '20px',
+        y: "24px",
       });
-      reveal($$('#hero > div:last-child .grid > div'), {
-        base: 440,
+      reveal($$("#hero > div:last-child .grid > div"), {
+        base: 420,
         step: 130,
-        y: '48px',
-        s: '.96',
+        y: "56px",
+        s: ".955",
       });
-      reveal($$('#hero .icon-btn'), {
+      reveal($$("#hero .icon-btn"), {
         base: 1200,
         lag: 500,
         step: 80,
-        y: '0px',
-        s: '.5',
+        y: "0px",
+        s: ".4",
       });
 
       /* ---------- Mission ---------- */
-      const about = $('#about');
-      reveal(about, { y: '40px', s: '.98' });
-      scrubWords(about ? $('h2', about) : null);
-      reveal($$('#about > div:last-child > span'), {
+      const about = $("#about");
+      reveal(about, { y: "48px", s: ".97" });
+      scrubWords(about ? $("h2", about) : null);
+      reveal($$("#about > div:last-child > span"), {
         step: 80,
         lag: 200,
-        y: '16px',
+        y: "18px",
         blur: true,
       });
 
       /* ---------- Services ---------- */
-      splitWords($('#services h2'), { step: 60 });
-      reveal($('#services > div:first-child > p'), {
+      splitWords($("#services h2"), { step: 60 });
+      reveal($("#services > div:first-child > p"), {
         lag: 260,
-        y: '16px',
+        y: "20px",
         blur: true,
       });
-      reveal($$('#services > div:last-child > div'), {
+      reveal($$("#services > div:last-child > div"), {
         step: 110,
-        y: '40px',
-        s: '.975',
+        y: "48px",
+        s: ".97",
       });
 
       /* ---------- Work ---------- */
-      splitWords($('#work h2'), { step: 60 });
-      reveal($('#work > div:first-child > div'), {
+      splitWords($("#work h2"), { step: 60 });
+      reveal($("#work > div:first-child > div"), {
         lag: 260,
-        y: '16px',
+        y: "20px",
       });
-      reveal($('#work > div:last-child > div:first-child'), {
-        y: '48px',
-        s: '.975',
+      reveal($("#work > div:last-child > div:first-child"), {
+        y: "56px",
+        s: ".97",
       });
-      reveal($$('#work > div:last-child > div:last-child > div'), {
+      reveal($$("#work > div:last-child > div:last-child > div"), {
         step: 130,
-        y: '48px',
-        s: '.975',
+        y: "56px",
+        s: ".97",
       });
 
       /* ---------- Contact + footer ---------- */
-      reveal($('#contact'), { y: '32px', s: '.98' });
-      splitWords($('#contact h2'), { step: 40, lag: 120 });
-      reveal($('#contact h2 + p'), {
+      reveal($("#contact"), { y: "40px", s: ".975" });
+      splitWords($("#contact h2"), { step: 40, lag: 120 });
+      reveal($("#contact h2 + p"), {
         lag: 380,
-        y: '16px',
+        y: "18px",
         blur: true,
       });
-      reveal($$('#contact-form > *'), {
+      reveal($$("#contact-form > *"), {
         base: 300,
         lag: 480,
         step: 110,
-        y: '24px',
+        y: "28px",
       });
-      reveal($('footer'), { y: '16px' });
+      reveal($("footer"), { y: "20px" });
 
       /* ---------- Hover behaviour hooks ---------- */
       $$(
-        '#services > div:last-child > div, #work > div:last-child > div:last-child > div, #work > div:last-child > div:first-child'
-      ).forEach((c) => c.classList.add('card-lift'));
-      $$('#hero .reveal').forEach((c) => {
-        if (c.querySelector('.media-img')) c.classList.add('zoom-host');
+        "#services > div:last-child > div, #work > div:last-child > div:last-child > div, #work > div:last-child > div:first-child",
+      ).forEach((c) => c.classList.add("card-lift"));
+      $$("#hero .reveal").forEach((c) => {
+        if (c.querySelector(".media-img")) c.classList.add("zoom-host");
       });
     } catch {
-      console.warn('Motion setup failed; showing content without animation.');
-      root.classList.add('no-motion');
+      console.warn("Motion setup failed; showing content without animation.");
+      root.classList.add("no-motion");
     }
   }
 
@@ -423,32 +395,35 @@ export function initMotion(): () => void {
      compact   → contracts to a dark island hugging its content (scrolling down)
      expanded  → springs open again (scrolling up, hover, or keyboard focus)
      ===================================================================== */
-  const header = $('header') as HTMLElement | null;
+  const header = $("header") as HTMLElement | null;
   if (header) {
     /* The island floats (position: fixed) so it is always centred on the viewport.
        To keep the page structure identical, a spacer takes over exactly the room
        the header used to occupy in the flow. */
     const hcs = getComputedStyle(header);
-    const wasOut = hcs.position === 'fixed' || hcs.position === 'absolute';
+    const wasOut = hcs.position === "fixed" || hcs.position === "absolute";
     const hTop = wasOut ? header.offsetTop : docTop(header);
     let spacer: HTMLElement | null = null;
     if (!wasOut) {
       const next = header.nextElementSibling as HTMLElement | null;
       let h = next ? docTop(next) - hTop : header.offsetHeight;
-      const pcs = header.parentElement ? getComputedStyle(header.parentElement) : null;
-      if (pcs && /flex|grid/.test(pcs.display)) h -= parseFloat(pcs.rowGap) || 0;
-      spacer = document.createElement('div');
-      spacer.className = 'island-spacer';
-      spacer.setAttribute('aria-hidden', 'true');
-      spacer.style.height = Math.max(0, h) + 'px';
+      const pcs = header.parentElement
+        ? getComputedStyle(header.parentElement)
+        : null;
+      if (pcs && /flex|grid/.test(pcs.display))
+        h -= parseFloat(pcs.rowGap) || 0;
+      spacer = document.createElement("div");
+      spacer.className = "island-spacer";
+      spacer.setAttribute("aria-hidden", "true");
+      spacer.style.height = Math.max(0, h) + "px";
       spacer.style.marginTop = hcs.marginTop;
       header.before(spacer);
     }
-    header.style.setProperty('--island-top', Math.max(14, hTop) + 'px');
-    header.style.setProperty('--sy', scrollY + 'px');
-    header.classList.add('island');
-    const hero = $('#hero') as HTMLElement | null;
-    let state: IslandState = 'top';
+    header.style.setProperty("--island-top", Math.max(14, hTop) + "px");
+    header.style.setProperty("--sy", scrollY + "px");
+    header.classList.add("island");
+    const hero = $("#hero") as HTMLElement | null;
+    let state: IslandState = "top";
     let hover = false;
     let dirUp = false;
     let lastY = scrollY;
@@ -472,46 +447,48 @@ export function initMotion(): () => void {
     addCleanup(() => cancelAnimationFrame(trackRaf));
 
     const decide = (y: number): IslandState => {
-      if (y < 80) return 'top';
-      if (hover || header.matches(':focus-within')) return 'expanded';
-      return dirUp ? 'expanded' : 'compact';
+      if (y < 80) return "top";
+      if (hover || header.matches(":focus-within")) return "expanded";
+      return dirUp ? "expanded" : "compact";
     };
     const apply = (y = scrollY) => {
       const next = decide(y);
       if (next === state && header.dataset.island === next) return;
       state = next;
       header.dataset.island = next;
-      trackPill(1100);
+      trackPill(1800);
     };
 
     /* Measure what the island needs to wrap its content, so the compact
        width is exact at any font size or language. */
     const measure = () => {
       // top-state width follows the hero grid so both share the same edges
-      if (hero) header.style.setProperty('--island-hero', hero.offsetWidth + 'px');
-      header.classList.add('is-measuring', 'no-trans');
+      if (hero)
+        header.style.setProperty("--island-hero", hero.offsetWidth + "px");
+      header.classList.add("is-measuring", "no-trans");
       const hr = header.getBoundingClientRect();
       // rects are scaled while the entrance animation runs; undo that so the width is exact
       const k = hr.width / (header.offsetWidth || 1) || 1;
       let right = 0;
-      header.querySelectorAll('*').forEach((n) => {
+      header.querySelectorAll("*").forEach((n) => {
         const r = (n as HTMLElement).getBoundingClientRect();
         if (r.width || r.height) right = Math.max(right, r.right);
       });
       const padR = parseFloat(getComputedStyle(header).paddingRight) || 0;
-      header.classList.remove('is-measuring');
+      header.classList.remove("is-measuring");
       void header.offsetWidth; // flush while transitions are still off
-      requestAnimationFrame(() => header.classList.remove('no-trans'));
+      requestAnimationFrame(() => header.classList.remove("no-trans"));
       if (right > hr.left)
         header.style.setProperty(
-          '--island-compact',
-          Math.ceil((right - hr.left) / k + padR + 14) + 'px'
+          "--island-compact",
+          Math.ceil((right - hr.left) / k + padR + 14) + "px",
         );
     };
     measure();
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
-    addEventListener('resize', measure);
-    addCleanup(() => removeEventListener('resize', measure));
+    if (document.fonts && document.fonts.ready)
+      document.fonts.ready.then(measure);
+    addEventListener("resize", measure);
+    addCleanup(() => removeEventListener("resize", measure));
 
     header.dataset.island = state;
     apply();
@@ -521,17 +498,17 @@ export function initMotion(): () => void {
       lastY = y;
       acc = Math.sign(d) === Math.sign(acc) ? acc + d : d;
       if (glide) dirUp = false;
-      else if (acc > 24) dirUp = false;
-      else if (acc < -24) dirUp = true;
+      else if (acc > 40) dirUp = false;
+      else if (acc < -48) dirUp = true;
 
       const max = Math.max(1, root.scrollHeight - innerHeight);
-      header.style.setProperty('--p', clamp(y / max, 0, 1).toFixed(3));
-      header.style.setProperty('--sy', y + 'px');
+      header.style.setProperty("--p", clamp(y / max, 0, 1).toFixed(3));
+      header.style.setProperty("--sy", y + "px");
       apply(y);
     });
 
     const onEnter = (e: PointerEvent) => {
-      if (e.pointerType !== 'mouse') return;
+      if (e.pointerType !== "mouse") return;
       clearTimeout(leaveTimer);
       hover = true;
       apply();
@@ -542,64 +519,66 @@ export function initMotion(): () => void {
       leaveTimer = window.setTimeout(() => {
         hover = false;
         apply();
-      }, 360);
+      }, 600);
     };
     const onFocusChange = () => requestAnimationFrame(() => apply());
-    header.addEventListener('pointerenter', onEnter);
-    header.addEventListener('pointerleave', onLeave);
-    header.addEventListener('focusin', onFocusChange);
-    header.addEventListener('focusout', onFocusChange);
+    header.addEventListener("pointerenter", onEnter);
+    header.addEventListener("pointerleave", onLeave);
+    header.addEventListener("focusin", onFocusChange);
+    header.addEventListener("focusout", onFocusChange);
     addCleanup(() => {
       clearTimeout(leaveTimer);
-      header.removeEventListener('pointerenter', onEnter);
-      header.removeEventListener('pointerleave', onLeave);
-      header.removeEventListener('focusin', onFocusChange);
-      header.removeEventListener('focusout', onFocusChange);
-      header.classList.remove('island');
+      header.removeEventListener("pointerenter", onEnter);
+      header.removeEventListener("pointerleave", onLeave);
+      header.removeEventListener("focusin", onFocusChange);
+      header.removeEventListener("focusout", onFocusChange);
+      header.classList.remove("island");
       delete header.dataset.island;
       spacer?.remove();
     });
 
     /* ---------- Sliding nav pill: follows hover, rests on the active section ---------- */
-    const navLinks = $$('.nav-link') as HTMLElement[];
+    const navLinks = $$(".nav-link") as HTMLElement[];
     const host = navLinks[0]?.parentElement ?? null;
     if (host) {
-      host.classList.add('nav-pill-host');
-      const pill = document.createElement('span');
-      pill.className = 'nav-pill';
-      pill.setAttribute('aria-hidden', 'true');
+      host.classList.add("nav-pill-host");
+      const pill = document.createElement("span");
+      pill.className = "nav-pill";
+      pill.setAttribute("aria-hidden", "true");
       host.prepend(pill);
 
       let hovered: HTMLElement | null = null;
       let armed = false;
       const place = (el: HTMLElement | null) => {
         if (!el) {
-          pill.style.opacity = '0';
+          pill.style.opacity = "0";
           return;
         }
         const padX = 12;
         const padY = 6;
-        pill.style.setProperty('--x', el.offsetLeft - padX + 'px');
-        pill.style.setProperty('--y', el.offsetTop - padY + 'px');
-        pill.style.setProperty('--pw', el.offsetWidth + padX * 2 + 'px');
-        pill.style.setProperty('--ph', el.offsetHeight + padY * 2 + 'px');
-        pill.style.opacity = '1';
+        pill.style.setProperty("--x", el.offsetLeft - padX + "px");
+        pill.style.setProperty("--y", el.offsetTop - padY + "px");
+        pill.style.setProperty("--pw", el.offsetWidth + padX * 2 + "px");
+        pill.style.setProperty("--ph", el.offsetHeight + padY * 2 + "px");
+        pill.style.opacity = "1";
         if (!armed) {
           // first placement snaps into position, every later one glides
           armed = true;
           requestAnimationFrame(() =>
-            requestAnimationFrame(() => pill.classList.add('is-ready'))
+            requestAnimationFrame(() => pill.classList.add("is-ready")),
           );
         }
       };
       syncPill = () =>
         place(
-          hovered ?? (navLinks.find((l) => l.classList.contains('active')) ?? null)
+          hovered ??
+            navLinks.find((l) => l.classList.contains("active")) ??
+            null,
         );
 
       navLinks.forEach((l) => {
         const enter = (e: Event) => {
-          if ((e as PointerEvent).pointerType === 'touch') return;
+          if ((e as PointerEvent).pointerType === "touch") return;
           hovered = l;
           syncPill();
         };
@@ -607,51 +586,36 @@ export function initMotion(): () => void {
           hovered = null;
           syncPill();
         };
-        l.addEventListener('pointerenter', enter);
-        l.addEventListener('focus', enter);
-        l.addEventListener('blur', leave);
+        l.addEventListener("pointerenter", enter);
+        l.addEventListener("focus", enter);
+        l.addEventListener("blur", leave);
         addCleanup(() => {
-          l.removeEventListener('pointerenter', enter);
-          l.removeEventListener('focus', enter);
-          l.removeEventListener('blur', leave);
+          l.removeEventListener("pointerenter", enter);
+          l.removeEventListener("focus", enter);
+          l.removeEventListener("blur", leave);
         });
       });
       const hostLeave = () => {
         hovered = null;
         syncPill();
       };
-      host.addEventListener('pointerleave', hostLeave);
+      host.addEventListener("pointerleave", hostLeave);
       addCleanup(() => {
-        host.removeEventListener('pointerleave', hostLeave);
+        host.removeEventListener("pointerleave", hostLeave);
         pill.remove();
-        host.classList.remove('nav-pill-host');
+        host.classList.remove("nav-pill-host");
         syncPill = () => {};
       });
       ready.then(syncPill);
     }
   }
 
-  /* ---------- Hero media parallax (translate property, so it never fights hover scale) ---------- */
-  if (!reduce) {
-    const media = $$('#hero .media-img') as HTMLElement[];
-    if (media.length) {
-      onScrollFrame((y) => {
-        if (y > innerHeight * 1.3) return;
-        const py = clamp(y * 0.07, 0, 72);
-        media.forEach((m, i) => {
-          m.style.translate =
-            '0 ' + (py * (i % 2 ? 1.25 : 0.85)).toFixed(1) + 'px';
-        });
-      });
-    }
-  }
-
   /* ---------- Marquee: eases to a stop on hover and back up to speed ---------- */
   (() => {
-    const track = $('.animate-marquee') as HTMLElement | null;
-    const wrap = track?.closest('.marquee-wrap') as Element | null;
+    const track = $(".animate-marquee") as HTMLElement | null;
+    const wrap = track?.closest(".marquee-wrap") as Element | null;
     if (!track || !wrap || reduce) return;
-    track.classList.add('is-js');
+    track.classList.add("is-js");
     let x = 0;
     let mult = 1;
     let goal = 1;
@@ -662,13 +626,13 @@ export function initMotion(): () => void {
       loop = track.offsetWidth / 2;
     };
     measure();
-    if ('ResizeObserver' in window) {
+    if ("ResizeObserver" in window) {
       const ro = new ResizeObserver(measure);
       ro.observe(track);
       addCleanup(() => ro.disconnect());
     } else {
-      addEventListener('resize', measure);
-      addCleanup(() => removeEventListener('resize', measure));
+      addEventListener("resize", measure);
+      addCleanup(() => removeEventListener("resize", measure));
     }
     if (document.fonts && document.fonts.ready) {
       document.fonts.ready.then(measure);
@@ -676,11 +640,11 @@ export function initMotion(): () => void {
     const tick = (t: number) => {
       const dt = Math.min(0.05, (t - (last || t)) / 1000);
       last = t;
-      mult += (goal - mult) * (1 - Math.exp(-dt * 3.8));
+      mult += (goal - mult) * (1 - Math.exp(-dt * 4.5));
       if (loop > 0) {
-        x -= (loop / 26) * mult * dt;
+        x -= (loop / 22) * mult * dt;
         if (x <= -loop) x += loop;
-        track.style.transform = 'translate3d(' + x.toFixed(2) + 'px,0,0)';
+        track.style.transform = "translate3d(" + x.toFixed(2) + "px,0,0)";
       }
       raf = requestAnimationFrame(tick);
     };
@@ -695,163 +659,56 @@ export function initMotion(): () => void {
       raf = 0;
     };
     const onPointerEnter = (e: Event) => {
-      if ((e as PointerEvent).pointerType === 'mouse') goal = 0;
+      if ((e as PointerEvent).pointerType === "mouse") goal = 0;
     };
     const onPointerLeave = () => {
       goal = 1;
     };
     if (hasIO) {
       const obs = new IntersectionObserver(([e]) =>
-        e.isIntersecting ? start() : stop()
+        e.isIntersecting ? start() : stop(),
       );
       obs.observe(wrap);
       addCleanup(() => obs.disconnect());
     } else {
       start();
     }
-    wrap.addEventListener('pointerenter', onPointerEnter);
-    wrap.addEventListener('pointerleave', onPointerLeave);
+    wrap.addEventListener("pointerenter", onPointerEnter);
+    wrap.addEventListener("pointerleave", onPointerLeave);
     addCleanup(() => {
       stop();
-      wrap.removeEventListener('pointerenter', onPointerEnter);
-      wrap.removeEventListener('pointerleave', onPointerLeave);
+      wrap.removeEventListener("pointerenter", onPointerEnter);
+      wrap.removeEventListener("pointerleave", onPointerLeave);
     });
   })();
 
-  /* ---------- Magnetic buttons: lerped, so they glide in and settle back softly ---------- */
+  /* ---------- Magnetic buttons ---------- */
   if (finePointer && !reduce) {
-    $$('.btn:not(.btn-wide)').forEach((b) => {
+    $$(".btn:not(.btn-wide)").forEach((b) => {
       const pull = 0.22;
       const max = 9;
       const button = b as HTMLElement;
-      let tx = 0;
-      let ty = 0;
-      let x = 0;
-      let y = 0;
-      let raf = 0;
-      const frame = () => {
-        x = lerp(x, tx, 0.16);
-        y = lerp(y, ty, 0.16);
-        const settled = Math.abs(x - tx) < 0.05 && Math.abs(y - ty) < 0.05;
-        if (settled) {
-          x = tx;
-          y = ty;
-          raf = 0;
-        } else {
-          raf = requestAnimationFrame(frame);
-        }
-        if (x === 0 && y === 0) button.style.removeProperty('translate');
-        else
-          button.style.setProperty(
-            'translate',
-            x.toFixed(2) + 'px ' + y.toFixed(2) + 'px'
-          );
-      };
-      const kick = () => {
-        if (!raf) raf = requestAnimationFrame(frame);
-      };
       const onMove = (e: Event) => {
         const pe = e as PointerEvent;
-        if (pe.pointerType !== 'mouse') return;
         const r = button.getBoundingClientRect();
-        tx = clamp((pe.clientX - (r.left + r.width / 2)) * pull, -max, max);
-        ty = clamp((pe.clientY - (r.top + r.height / 2)) * pull, -max, max);
-        kick();
+        const dx = (pe.clientX - (r.left + r.width / 2)) * pull;
+        const dy = (pe.clientY - (r.top + r.height / 2)) * pull;
+        button.style.translate =
+          clamp(dx, -max, max).toFixed(1) +
+          "px " +
+          clamp(dy, -max, max).toFixed(1) +
+          "px";
       };
       const onLeave = () => {
-        tx = 0;
-        ty = 0;
-        kick();
+        button.style.translate = "";
       };
-      button.addEventListener('pointermove', onMove);
-      button.addEventListener('pointerleave', onLeave);
+      button.addEventListener("pointermove", onMove);
+      button.addEventListener("pointerleave", onLeave);
       addCleanup(() => {
-        cancelAnimationFrame(raf);
-        button.removeEventListener('pointermove', onMove);
-        button.removeEventListener('pointerleave', onLeave);
-        button.style.removeProperty('translate');
+        button.removeEventListener("pointermove", onMove);
+        button.removeEventListener("pointerleave", onLeave);
+        button.style.translate = "";
       });
-    });
-  }
-
-  /* ---------- Card spotlight: a soft light that follows the cursor ---------- */
-  if (finePointer && !reduce) {
-    $$('.card-lift').forEach((c) => {
-      const card = c as HTMLElement;
-      const onMove = (e: Event) => {
-        const pe = e as PointerEvent;
-        if (pe.pointerType !== 'mouse') return;
-        const r = card.getBoundingClientRect();
-        card.style.setProperty('--mx', (pe.clientX - r.left).toFixed(0) + 'px');
-        card.style.setProperty('--my', (pe.clientY - r.top).toFixed(0) + 'px');
-      };
-      card.addEventListener('pointermove', onMove);
-      addCleanup(() => card.removeEventListener('pointermove', onMove));
-    });
-  }
-
-  /* ---------- Inertial wheel scrolling (mouse wheels only; trackpads stay native) ---------- */
-  if (SMOOTH_WHEEL && finePointer && !reduce) {
-    let target = scrollY;
-    let cur = scrollY;
-    let raf = 0;
-    let active = false;
-    const maxScroll = () => Math.max(0, root.scrollHeight - innerHeight);
-
-    const insideScrollable = (start: EventTarget | null) => {
-      for (
-        let n = start as HTMLElement | null;
-        n && n !== document.body;
-        n = n.parentElement
-      ) {
-        const oy = getComputedStyle(n).overflowY;
-        if ((oy === 'auto' || oy === 'scroll') && n.scrollHeight > n.clientHeight + 1)
-          return true;
-      }
-      return false;
-    };
-
-    const loop = () => {
-      cur = lerp(cur, target, 0.1);
-      const done = Math.abs(target - cur) < 0.5;
-      if (done) cur = target;
-      scrollTo({ top: cur, behavior: 'instant' });
-      if (done) {
-        raf = 0;
-        active = false;
-      } else {
-        raf = requestAnimationFrame(loop);
-      }
-    };
-
-    stopWheel = () => {
-      cancelAnimationFrame(raf);
-      raf = 0;
-      active = false;
-    };
-
-    const onWheel = (e: WheelEvent) => {
-      if (e.ctrlKey || e.defaultPrevented || e.deltaX !== 0) return;
-      // Only notched mouse wheels qualify; precision trackpads already feel smooth
-      const notched =
-        e.deltaMode === 1 ||
-        (Math.abs(e.deltaY) >= 50 && Number.isInteger(e.deltaY));
-      if (!notched || insideScrollable(e.target)) return;
-      e.preventDefault();
-      if (!active) {
-        target = cur = scrollY;
-        active = true;
-      }
-      const dy = e.deltaMode === 1 ? e.deltaY * 32 : e.deltaY;
-      target = clamp(target + dy, 0, maxScroll());
-      if (!raf) raf = requestAnimationFrame(loop);
-    };
-
-    addEventListener('wheel', onWheel, { passive: false });
-    addCleanup(() => {
-      removeEventListener('wheel', onWheel);
-      stopWheel();
-      stopWheel = () => {};
     });
   }
 
@@ -862,19 +719,18 @@ export function initMotion(): () => void {
       glide = 0;
     }
   };
-  ['wheel', 'touchstart', 'keydown'].forEach((ev) =>
-    addEventListener(ev, cancelGlide, { passive: true })
+  ["wheel", "touchstart", "keydown"].forEach((ev) =>
+    addEventListener(ev, cancelGlide, { passive: true }),
   );
   addCleanup(() => {
-    ['wheel', 'touchstart', 'keydown'].forEach((ev) =>
-      removeEventListener(ev, cancelGlide)
+    ["wheel", "touchstart", "keydown"].forEach((ev) =>
+      removeEventListener(ev, cancelGlide),
     );
     cancelGlide();
   });
 
   function glideTo(y: number, onDone?: () => void) {
     cancelGlide();
-    stopWheel();
     const from = scrollY;
     const to = clamp(y, 0, Math.max(0, root.scrollHeight - innerHeight));
     const dist = to - from;
@@ -882,11 +738,11 @@ export function initMotion(): () => void {
       onDone?.();
       return;
     }
-    const dur = clamp(Math.sqrt(Math.abs(dist)) * 40, 750, 1500);
+    const dur = clamp(Math.abs(dist) * 0.55 + 500, 1150, 2000);
     const t0 = performance.now();
     const frame = (now: number) => {
       const t = clamp((now - t0) / dur, 0, 1);
-      scrollTo({ top: from + dist * easeInOutCubic(t), behavior: 'instant' });
+      scrollTo({ top: from + dist * easeInOutQuart(t), behavior: "instant" });
       if (t < 1) {
         glide = requestAnimationFrame(frame);
       } else {
@@ -911,40 +767,41 @@ export function initMotion(): () => void {
     const targetEl = e.target as Element | null;
     const a = targetEl?.closest?.('a[href^="#"]') ?? null;
     if (!a) return;
-    const id = a.getAttribute('href')?.slice(1) ?? '';
-    const target = id && id !== 'top' ? document.getElementById(id) : null;
-    if (id && id !== 'top' && !target) return;
+    const id = a.getAttribute("href")?.slice(1) ?? "";
+    const target = id && id !== "top" ? document.getElementById(id) : null;
+    if (id && id !== "top" && !target) return;
     e.preventDefault();
     const margin = target
-      ? parseFloat(getComputedStyle(target).scrollMarginTop || '0') || 0
+      ? parseFloat(getComputedStyle(target).scrollMarginTop || "0") || 0
       : 0;
     glideTo(target ? docTop(target) - margin : 0, () => {
       if (!target) return;
-      if (!target.hasAttribute('tabindex')) target.setAttribute('tabindex', '-1');
+      if (!target.hasAttribute("tabindex"))
+        target.setAttribute("tabindex", "-1");
       target.focus({ preventScroll: true });
     });
     try {
-      history.pushState(null, '', '#' + id);
+      history.pushState(null, "", "#" + id);
     } catch {
       /* file:// or sandboxed */
     }
   };
 
-  document.addEventListener('click', onClick);
-  addCleanup(() => document.removeEventListener('click', onClick));
+  document.addEventListener("click", onClick);
+  addCleanup(() => document.removeEventListener("click", onClick));
 
   /* ---------- Active nav link ---------- */
-  const links = $$('.nav-link');
+  const links = $$(".nav-link");
   if (hasIO && links.length) {
     const byId = new Map(
-      links.map((a) => [a.getAttribute('href')?.slice(1) ?? '', a])
+      links.map((a) => [a.getAttribute("href")?.slice(1) ?? "", a]),
     );
     const setActive = (active: Element | null) => {
       links.forEach((l) => {
         const on = l === active;
-        l.classList.toggle('active', on);
-        if (on) l.setAttribute('aria-current', 'true');
-        else l.removeAttribute('aria-current');
+        l.classList.toggle("active", on);
+        if (on) l.setAttribute("aria-current", "true");
+        else l.removeAttribute("aria-current");
       });
       syncPill();
     };
@@ -954,7 +811,7 @@ export function initMotion(): () => void {
           if (e.isIntersecting) setActive(byId.get(e.target.id) ?? null);
         });
       },
-      { rootMargin: '-40% 0px -55% 0px' }
+      { rootMargin: "-40% 0px -55% 0px" },
     );
     byId.forEach((_, id) => {
       const s = document.getElementById(id);
@@ -968,7 +825,7 @@ export function initMotion(): () => void {
 
   /* ---------- Image fallback (hotlinked images can fail) ---------- */
   const placeholder = (label: string) =>
-    'data:image/svg+xml;utf8,' +
+    "data:image/svg+xml;utf8," +
     encodeURIComponent(
       '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400"><defs>' +
         '<linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E1F2F5"/>' +
@@ -977,34 +834,34 @@ export function initMotion(): () => void {
         '<text x="50%" y="50%" text-anchor="middle" dominant-baseline="middle" ' +
         'font-family="Inter,Arial,sans-serif" font-size="32" font-weight="600" letter-spacing="4" fill="#2F9FB3">' +
         label.toUpperCase() +
-        '</text></svg>'
+        "</text></svg>",
     );
 
-  $$('img').forEach((img) => {
+  $$("img").forEach((img) => {
     const image = img as HTMLImageElement;
     const fix = () => {
       if (image.dataset.fallback) return;
-      image.dataset.fallback = '1';
-      image.src = placeholder(image.dataset.label || image.alt || 'Preview');
+      image.dataset.fallback = "1";
+      image.src = placeholder(image.dataset.label || image.alt || "Preview");
     };
-    image.addEventListener('error', fix);
-    addCleanup(() => image.removeEventListener('error', fix));
-    if (image.complete && image.naturalWidth === 0 && image.getAttribute('src'))
+    image.addEventListener("error", fix);
+    addCleanup(() => image.removeEventListener("error", fix));
+    if (image.complete && image.naturalWidth === 0 && image.getAttribute("src"))
       fix();
   });
 
   /* ---------- Contact form ---------- */
-  const form = $('#contact-form');
+  const form = $("#contact-form");
   if (form) {
-    const btn = $('#submit-btn') as HTMLButtonElement | null;
-    const label = $('#submit-label') as HTMLSpanElement | null;
-    const status = $('#form-status') as HTMLParagraphElement | null;
+    const btn = $("#submit-btn") as HTMLButtonElement | null;
+    const label = $("#submit-label") as HTMLSpanElement | null;
+    const status = $("#form-status") as HTMLParagraphElement | null;
     const CONFIG = {
-      contactEmail: 'jainsanyam441@gmail.com',
-      formEndpoint: '',
+      contactEmail: "jainsanyam441@gmail.com",
+      formEndpoint: "",
     };
 
-    const idle = label?.textContent ?? '';
+    const idle = label?.textContent ?? "";
 
     const replay = (el: Element, cls: string) => {
       el.classList.remove(cls);
@@ -1016,9 +873,9 @@ export function initMotion(): () => void {
       if (!status) return;
       status.textContent = msg;
       status.className =
-        'mt-3 text-center text-[14px] ' +
-        (ok ? 'text-[#2F9FB3]' : 'text-[#D14343]');
-      replay(status, 'pop');
+        "mt-3 text-center text-[14px] " +
+        (ok ? "text-[#2F9FB3]" : "text-[#D14343]");
+      replay(status, "pop");
     };
 
     const setBusy = (busy: boolean) => {
@@ -1027,11 +884,11 @@ export function initMotion(): () => void {
         label.innerHTML = busy
           ? '<span class="spinner"></span><span>Sending…</span>'
           : idle;
-        label.classList.toggle('flex', busy);
-        label.classList.toggle('items-center', busy);
-        label.classList.toggle('justify-center', busy);
-        label.classList.toggle('gap-2', busy);
-        replay(label, 'swap');
+        label.classList.toggle("flex", busy);
+        label.classList.toggle("items-center", busy);
+        label.classList.toggle("justify-center", busy);
+        label.classList.toggle("gap-2", busy);
+        replay(label, "swap");
       }
     };
 
@@ -1040,18 +897,18 @@ export function initMotion(): () => void {
       if (btn?.disabled) return;
       if (!(form as HTMLFormElement).reportValidity()) return;
       const gotcha = (form as HTMLFormElement).elements.namedItem(
-        '_gotcha'
+        "_gotcha",
       ) as HTMLInputElement | null;
       if (gotcha && gotcha.value) return;
 
       const nameInput = (form as HTMLFormElement).elements.namedItem(
-        'name'
+        "name",
       ) as HTMLInputElement;
       const emailInput = (form as HTMLFormElement).elements.namedItem(
-        'email'
+        "email",
       ) as HTMLInputElement;
       const messageInput = (form as HTMLFormElement).elements.namedItem(
-        'message'
+        "message",
       ) as HTMLTextAreaElement;
       const data = {
         name: nameInput.value.trim(),
@@ -1063,40 +920,49 @@ export function initMotion(): () => void {
         setBusy(true);
         try {
           const res = await fetch(CONFIG.formEndpoint, {
-            method: 'POST',
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
-              Accept: 'application/json',
+              "Content-Type": "application/json",
+              Accept: "application/json",
             },
             body: JSON.stringify(data),
           });
-          if (!res.ok) throw new Error('Request failed');
+          if (!res.ok) throw new Error("Request failed");
           (form as HTMLFormElement).reset();
           setStatus(
-            'Message sent. Thanks, ' + data.name.split(' ')[0] + "! I'll reply soon.",
-            true
+            "Message sent. Thanks, " +
+              data.name.split(" ")[0] +
+              "! I'll reply soon.",
+            true,
           );
         } catch {
           setStatus(
             "Couldn't send your message. Please try again or email me directly.",
-            false
+            false,
           );
         } finally {
           setBusy(false);
         }
       } else {
-        const subject = encodeURIComponent('Portfolio inquiry from ' + data.name);
-        const body = encodeURIComponent(
-          data.message + '\n\n— ' + data.name + ' (' + data.email + ')'
+        const subject = encodeURIComponent(
+          "Portfolio inquiry from " + data.name,
         );
-        setStatus('Opening your email app…', true);
+        const body = encodeURIComponent(
+          data.message + "\n\n— " + data.name + " (" + data.email + ")",
+        );
+        setStatus("Opening your email app…", true);
         window.location.href =
-          'mailto:' + CONFIG.contactEmail + '?subject=' + subject + '&body=' + body;
+          "mailto:" +
+          CONFIG.contactEmail +
+          "?subject=" +
+          subject +
+          "&body=" +
+          body;
       }
     };
 
-    form.addEventListener('submit', onSubmit);
-    addCleanup(() => form.removeEventListener('submit', onSubmit));
+    form.addEventListener("submit", onSubmit);
+    addCleanup(() => form.removeEventListener("submit", onSubmit));
   }
 
   hubRequest();
@@ -1104,7 +970,7 @@ export function initMotion(): () => void {
   return () => {
     cleanups.forEach((fn) => fn());
     if (io) io.disconnect();
-    root.classList.remove('js', 'no-motion');
+    root.classList.remove("js", "no-motion");
     initialized = false;
   };
 }
