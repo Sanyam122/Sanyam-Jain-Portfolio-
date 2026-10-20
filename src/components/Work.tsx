@@ -1,3 +1,5 @@
+import stayhubImg from "../assets/stayhub.png";
+
 export default function Work() {
   return (
     <section id="work" className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -83,7 +85,7 @@ export default function Work() {
           <div className="bg-white rounded-[32px] p-6 border border-black/[0.03] flex flex-col justify-between">
             <div className="rounded-[24px] overflow-hidden aspect-[16/10] bg-stone-100">
               <img
-                src="src/assets/stayhub.png"
+                src={stayhubImg}
                 alt="StayHub project preview"
                 data-label="StayHub"
                 loading="lazy"
