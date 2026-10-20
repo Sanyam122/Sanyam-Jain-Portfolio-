@@ -1,29 +1,62 @@
+import { motion } from "motion/react";
+import { scrollReveal, useReducedMotion } from "../lib/motion";
+
 export default function Footer() {
+  const reduced = useReducedMotion();
+
+  const reveal = scrollReveal(reduced);
+  const linkPress = reduced ? {} : { whileTap: { scale: 0.98 } };
+
   return (
-    <footer className="w-full bg-white rounded-[24px] px-8 py-8 flex flex-col md:flex-row items-center justify-between border border-black/[0.03] gap-4">
-      <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-full bg-[#222222] flex items-center justify-center text-white font-bold text-sm">
+    <motion.footer
+      {...reveal}
+      className='w-full bg-white rounded-[24px] px-8 py-8 flex flex-col md:flex-row items-center justify-between border border-black/[0.03] gap-4 shadow-card'
+    >
+      <motion.div
+        {...scrollReveal(reduced, 0.06)}
+        className='flex items-center gap-3'
+      >
+        <div className='w-8 h-8 rounded-full bg-[#222222] flex items-center justify-center text-white font-bold text-sm'>
           SJ
         </div>
-        <span className="text-[14px] font-semibold text-[#222222] uppercase tracking-wider">
+        <span className='text-[14px] font-semibold text-[#222222] uppercase tracking-wider'>
           Sanyam jain
         </span>
-      </div>
+      </motion.div>
 
-      <div className="flex items-center gap-6 text-[13px] font-semibold uppercase tracking-wider text-[#666666]">
-        <a href="#top" className="foot-link hover:text-[#2F9FB3]">
+      <motion.div
+        {...scrollReveal(reduced, 0.14)}
+        className='flex items-center gap-6 text-[13px] font-semibold uppercase tracking-wider text-[#666666]'
+      >
+        <motion.a
+          {...linkPress}
+          href='#top'
+          className='foot-link hover:text-[#2F9FB3]'
+        >
           B.tech
-        </a>
-        <a href="#top" className="foot-link hover:text-[#2F9FB3]">
+        </motion.a>
+        <motion.a
+          {...linkPress}
+          href='#top'
+          className='foot-link hover:text-[#2F9FB3]'
+        >
           IT
-        </a>
-        <a href="#services" className="foot-link hover:text-[#2F9FB3]">
+        </motion.a>
+        <motion.a
+          {...linkPress}
+          href='#services'
+          className='foot-link hover:text-[#2F9FB3]'
+        >
           Full Stack Dev
-        </a>
-        <a href="#work" className="foot-link hover:text-[#2F9FB3]">
+        </motion.a>
+        <motion.a
+          {...linkPress}
+          href='#work'
+          className='foot-link hover:text-[#2F9FB3]'
+        >
           Java backend
-        </a>
-      </div>
-    </footer>
+        </motion.a>
+      </motion.div>
+    </motion.footer>
   );
 }

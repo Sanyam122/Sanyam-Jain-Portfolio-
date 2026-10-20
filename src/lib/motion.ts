@@ -1,11 +1,173 @@
-type RevealElement = HTMLElement & {
-  _init?: boolean;
-  _plan?: number;
-  _lag?: number;
-  _gap?: number;
-  _o?: number;
-  _done?: boolean;
-};
+import { useReducedMotion as useReducedMotionHook } from "motion/react";
+
+/* =====================================================================
+   MOTION SYSTEM — Apple-inspired, built on framer-motion
+   ---------------------------------------------------------------------
+   Principles
+   1. Fast to start, slow to land. Everything decelerates; nothing drags.
+   2. Springs for things you touch, long curves for things that arrive.
+   3. Short timings: UI feedback 80–550 ms, entrances ~800 ms, never 1.5 s+.
+   4. Only opacity / transform-family properties animate (GPU friendly).
+   5. Respect prefers-reduced-motion; never animate endlessly.
+   ===================================================================== */
+
+/* ── Timing scale (seconds) ─────────────────────────────────────────── */
+export const duration = {
+  instant: 0.08, // press / tap feedback
+  fast: 0.15, // hover / focus
+  standard: 0.30, // general transitions
+  slow: 0.50, // heavier transitions
+  entrance: 0.80, // entrance reveals (never above ~1.1 s)
+} as const;
+
+/* ── Easing curves (cubic-bezier arrays for framer-motion) ──────────── */
+export const ease = {
+  standard: [0.28, 0.11, 0.32, 1], // deceleration — Apple-style arrival
+  out: [0.22, 1, 0.36, 1], // quick start, gentle landing
+  inOut: [0.42, 0, 0.58, 1],
+  sheet: [0.32, 0.72, 0, 1], // arrives, then settles
+  spring: [0.34, 1.5, 0.64, 1], // gentle pop for touch feedback
+} as const;
+
+/* ── Stagger timing (seconds) ───────────────────────────────────────── */
+export const stagger = {
+  tight: 0.04, // small groups (chips, tags)
+  standard: 0.08, // lists, cards, grid items
+  loose: 0.12, // spacious sections
+} as const;
+
+/* ── Scroll reveal configuration ────────────────────────────────────── */
+export const scroll = {
+  threshold: 0.12, // fraction visible before revealing
+  rootMargin: "0px 0px -12% 0px", // trigger slightly before viewport entry
+  once: true, // animate once, never repeat on re-entry
+} as const;
+
+/* ── Entrance variants ──────────────────────────────────────────────── */
+export const variants = {
+  fadeInUp: {
+    hidden: { opacity: 0, y: 24 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: duration.entrance, ease: ease.sheet },
+    },
+  },
+  fadeInDown: {
+    hidden: { opacity: 0, y: -16 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: duration.entrance, ease: ease.sheet },
+    },
+  },
+  fadeIn: {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { duration: duration.entrance, ease: ease.standard },
+    },
+  },
+  scaleIn: {
+    hidden: { opacity: 0, scale: 0.96 },
+    visible: {
+      opacity: 1,
+      scale: 1,
+      transition: { duration: duration.entrance, ease: ease.sheet },
+    },
+  },
+  staggerContainer: {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: stagger.standard,
+        delayChildren: 0.1,
+        ease: ease.standard,
+      },
+    },
+  },
+  staggerContainerTight: {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: stagger.tight,
+        delayChildren: 0.05,
+        ease: ease.standard,
+      },
+    },
+  },
+} as const;
+
+/* ── Interaction configs (whileHover / whileTap) ────────────────────── */
+export const hover = {
+  lift: { y: -6 },
+  scale: { scale: 1.03 },
+  image: { scale: 1.04 },
+  pop: { scale: 1.08, y: -2 },
+} as const;
+
+export const tap = {
+  press: { scale: 0.965 },
+  card: { scale: 0.994 },
+  icon: { scale: 0.92 },
+} as const;
+
+/* ── Hooks ──────────────────────────────────────────────────────────── */
+export function useReducedMotion(): boolean {
+  return Boolean(useReducedMotionHook());
+}
+
+/* ── Reveal props helpers ───────────────────────────────────────────── */
+/* Scroll reveal: animates once when the element enters the viewport. */
+export function scrollReveal(reduced: boolean, delay = 0) {
+  if (reduced) return {};
+  return {
+    initial: { opacity: 0, y: 24 },
+    whileInView: { opacity: 1, y: 0 },
+    viewport: {
+      margin: scroll.rootMargin,
+      amount: scroll.threshold,
+      once: scroll.once,
+    },
+    transition: {
+      duration: duration.entrance,
+      ease: ease.sheet,
+      delay,
+    },
+  };
+}
+
+/* Mount reveal: animates on mount (for above-fold content such as the hero). */
+export function mountReveal(reduced: boolean, delay = 0) {
+  if (reduced) return {};
+  return {
+    initial: { opacity: 0, y: 24 },
+    animate: { opacity: 1, y: 0 },
+    transition: {
+      duration: duration.entrance,
+      ease: ease.sheet,
+      delay,
+    },
+  };
+}
+
+/* Fade-only wrapper reveal (no transform, so it never compounds with child motion). */
+export function fadeIn(reduced: boolean, delay = 0) {
+  if (reduced) return {};
+  return {
+    initial: { opacity: 0 },
+    animate: { opacity: 1 },
+    transition: { duration: duration.entrance, ease: ease.standard, delay },
+  };
+}
+
+/* =====================================================================
+   FUNCTIONAL UI (preserved from previous implementation)
+   Island navbar, eased anchor scrolling, active nav pill, scroll hub.
+   These are interaction/UX features, not decorative motion.
+   ===================================================================== */
 
 const $ = (s: string, r: Document | Element = document): Element | null =>
   r.querySelector(s);
@@ -35,11 +197,11 @@ export function initMotion(): () => void {
   initialized = true;
 
   const root = document.documentElement;
-  const reduce =
-    matchMedia("(prefers-reduced-motion: reduce)").matches ||
-    matchMedia("(prefers-reduced-motion: no-preference)").matches === false;
+  /* Correct reduced-motion detection: only honor an explicit "reduce" preference. */
+  const reduce = Boolean(
+    matchMedia("(prefers-reduced-motion: reduce)").matches,
+  );
 
-  /* ---------- Safety net: never leave content hidden if JS fails ---------- */
   try {
     root.classList.add("js");
     if (reduce) root.classList.add("no-motion");
@@ -48,28 +210,10 @@ export function initMotion(): () => void {
     return () => {};
   }
 
-  /* ---------- Shared plumbing ---------- */
   const cleanups: (() => void)[] = [];
   const addCleanup = (fn: () => void) => cleanups.push(fn);
 
-  const timers = new Set<number>();
-  const later = (fn: () => void, ms: number) => {
-    const id = window.setTimeout(() => {
-      timers.delete(id);
-      fn();
-    }, ms);
-    timers.add(id);
-    return id;
-  };
-  addCleanup(() => {
-    timers.forEach((id) => clearTimeout(id));
-    timers.clear();
-  });
-
-  let glide = 0;
-  let syncPill: () => void = () => {};
-
-  /* One scroll/resize listener, one rAF per frame, shared by every scroll-driven effect */
+  /* One scroll/resize listener, one rAF per frame, shared by scroll-driven effects */
   const scrollSubs: Array<(y: number) => void> = [];
   let hubQueued = false;
   const hubFlush = () => {
@@ -96,7 +240,7 @@ export function initMotion(): () => void {
     hubQueued = false;
   });
 
-  /* ---------- Wait for fonts before animating ---------- */
+  /* ---------- Wait for fonts before measuring the island ---------- */
   const fontGate =
     document.fonts && document.fonts.load
       ? Promise.race([
@@ -112,602 +256,8 @@ export function initMotion(): () => void {
     () => new Promise<void>((r) => requestAnimationFrame(() => r())),
   );
 
-  /* ---------- Reveal engine ---------- */
-  const domOrder = (a: Node, b: Node) =>
-    a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
-
-  const io =
-    typeof IntersectionObserver !== "undefined"
-      ? new IntersectionObserver(
-          (entries, obs) => {
-            const batch = entries
-              .filter((e) => e.isIntersecting)
-              .map((e) => e.target as RevealElement)
-              .sort(domOrder);
-            let n = 0;
-            batch.forEach((el) => {
-              const delay = Math.round(
-                el._init
-                  ? (el._plan ?? 0)
-                  : (el._lag ?? 0) + n++ * (el._gap ?? 0),
-              );
-              el.style.setProperty("--d", delay + "ms");
-              el.classList.add("in");
-              obs.unobserve(el);
-              later(() => {
-                if (el._done) return;
-                el._done = true;
-                el.classList.add("done");
-                el.style.removeProperty("will-change");
-                el.style.removeProperty("--d");
-              }, delay + 900);
-            });
-          },
-          { threshold: 0.10, rootMargin: "0px 0px -6% 0px" },
-        )
-      : null;
-
-  const queue = (el: Element) => {
-    ready.then(() => {
-      if (!io) {
-        el.classList.add("in", "done");
-        return;
-      }
-      const r = el.getBoundingClientRect();
-      (el as RevealElement)._init =
-        scrollY < 40 && r.top < innerHeight && r.bottom > 0;
-      io.observe(el);
-    });
-  };
-
-  function reveal(
-    targets: Element | Element[] | null | undefined,
-    {
-      base = 0,
-      step = 90,
-      lag = 0,
-      y,
-      s,
-      blur = false,
-    }: {
-      base?: number;
-      step?: number;
-      lag?: number;
-      y?: string;
-      s?: string;
-      blur?: boolean;
-    } = {},
-  ) {
-    const list: Element[] = !targets
-      ? []
-      : Array.isArray(targets)
-        ? targets
-        : [targets];
-    list.forEach((el, i) => {
-      if ((el as RevealElement)._done) return;
-      el.classList.add("reveal");
-      const elStyle = el as HTMLElement;
-      if (y !== undefined) elStyle.style.setProperty("--y", y);
-      if (s !== undefined) elStyle.style.setProperty("--s", s);
-      if (blur) el.setAttribute("data-blur", "");
-      const revealEl = el as RevealElement;
-      revealEl._plan = base + i * step;
-      revealEl._lag = lag;
-      revealEl._gap = step;
-      queue(el);
-    });
-  }
-
-  function splitWords(
-    el: Element | null | undefined,
-    {
-      base = 0,
-      step = 45,
-      lag = 0,
-      gap = 100,
-    }: {
-      base?: number;
-      step?: number;
-      lag?: number;
-      gap?: number;
-    } = {},
-  ) {
-    if (!el) return;
-    const nodes = Array.from(el.childNodes);
-    el.setAttribute(
-      "aria-label",
-      nodes
-        .map((n) => (n.nodeName === "BR" ? " " : n.textContent))
-        .join("")
-        .trim()
-        .replace(/\s+/g, " "),
-    );
-    el.setAttribute("data-split", "");
-    el.textContent = "";
-    let i = 0;
-    let needSpace = false;
-    nodes.forEach((node) => {
-      if (node.nodeName === "BR") {
-        el.appendChild(document.createElement("br"));
-        needSpace = false;
-        return;
-      }
-      node.textContent
-        ?.split(/\s+/)
-        .filter(Boolean)
-        .forEach((word) => {
-          if (needSpace) el.appendChild(document.createTextNode(" "));
-          const w = document.createElement("span");
-          w.className = "w";
-          w.setAttribute("aria-hidden", "true");
-          const inner = document.createElement("span");
-          inner.className = "wi";
-          inner.style.setProperty("--i", String(i++));
-          inner.textContent = word;
-          w.appendChild(inner);
-          el.appendChild(w);
-          needSpace = true;
-        });
-    });
-    (el as HTMLElement).style.setProperty("--step", step + "ms");
-    const revealEl = el as RevealElement;
-    revealEl._plan = base;
-    revealEl._lag = lag;
-    revealEl._gap = gap;
-    queue(el);
-  }
-
-  /* Scroll-scrubbed text: rAF loop damps displayed progress toward target, sleeps when caught up. */
-  function scrubWords(el: Element | null) {
-    if (!el || reduce) return;
-    const text = (el.textContent ?? "").trim().replace(/\s+/g, " ");
-    el.setAttribute("aria-label", text);
-    el.textContent = "";
-    const parts = text.split(" ");
-    const words = parts.map((word, i) => {
-      const s = document.createElement("span");
-      s.className = "sw";
-      s.setAttribute("aria-hidden", "true");
-      s.textContent = word;
-      el.appendChild(s);
-      if (i < parts.length - 1) el.appendChild(document.createTextNode(" "));
-      return s;
-    });
-    const tail = 6;
-    const n = words.length;
-    let target = 0;
-    let cur = 0;
-    let raf = 0;
-    let active = false;
-
-    const updateTarget = () => {
-      const r = el.getBoundingClientRect();
-      const p = clamp(
-        (innerHeight * 0.86 - r.top) / (r.height + innerHeight * 0.3),
-        0,
-        1,
-      );
-      target = p;
-      if (!active) {
-        active = true;
-        raf = requestAnimationFrame(tick);
-      }
-    };
-
-    const tick = () => {
-      // exponential damping toward target
-      cur += (target - cur) * (1 - Math.exp(-0.18));
-      const spread = clamp(cur * (n + tail), 0, n + tail);
-      let any = false;
-      words.forEach((w, i) => {
-        const v = clamp((spread - i) / tail, 0, 1);
-        const o = Number((0.25 + 0.75 * v).toFixed(2));
-        const we = w as RevealElement;
-        if (we._o !== o) {
-          we._o = o;
-          w.style.opacity = String(o);
-        }
-        if (o < 1 || o > 0.25) any = true;
-      });
-      if (Math.abs(target - cur) < 0.002 && !any) {
-        active = false;
-        raf = 0;
-      } else {
-        raf = requestAnimationFrame(tick);
-      }
-    };
-
-    onScrollFrame(updateTarget);
-    updateTarget();
-    addCleanup(() => {
-      if (raf) cancelAnimationFrame(raf);
-    });
-  }
-
-  /* ---------- Auto-choreography for every remaining element ---------- */
-  const isDescendantOf = (el: Element, selector: string) =>
-    el.closest(selector) !== null;
-
-  function typeOf(el: Element): "text" | "card" | "media" | "pop" | "line" | "field" | null {
-    const tag = el.tagName;
-    if (tag === "IMG" || tag === "VIDEO") return "media";
-    if (el.matches("hr")) return "line";
-    if (el.matches("input, textarea, select, label")) return "field";
-    if (el.matches("button, .btn, .icon-btn, [role='button'], .badge, .avatar")) return "pop";
-    if (el.matches("svg, [class*='icon'], .status-dot")) return "pop";
-    // links: button-like links pop, regular links rise as text
-    if (el.matches("a")) return el.matches(".btn, .icon-btn") ? "pop" : "text";
-    // rounded blocks / cards / visible container blocks with styling
-    if (
-      el.matches(
-        "[class*='rounded'], [class*='card'], .bg-white, [class*='gradient-card']",
-      ) &&
-      !el.matches("h1, h2, h3, h4, h5, h6, p, li, button")
-    )
-      return "card";
-    if (el.matches("h1, h2, h3, h4, h5, h6, p, span, li")) return "text";
-    return null;
-  }
-
-  function autoAnimate() {
-    const candidates = $$(
-      "h1, h2, h3, h4, h5, h6, p, span, li, a, button, img, video, svg, input, textarea, select, label, hr, .badge, .avatar, [class*='rounded'], .bg-white, [class*='gradient-card'], .card, [class*='card']",
-    );
-    const seen = new Set<Element>();
-    const ordered = candidates.filter((el) => {
-      if (seen.has(el)) return false;
-      seen.add(el);
-      // skip hidden / a11y
-      if (el.hasAttribute("aria-hidden") && el.getAttribute("aria-hidden") === "true")
-        return false;
-      if (el.closest("[aria-hidden='true']")) return false;
-      if (el.matches(".sr-only")) return false;
-      if (getComputedStyle(el).display === "none") return false;
-      // skip anchor wrappers that contain block content (they move with children)
-      if (el.matches("a") && el.children.length > 0) return false;
-      // descendants of buttons/headings/paragraphs/list items move with parent
-      if (
-        isDescendantOf(el, "button, .btn") ||
-        isDescendantOf(el, "h1, h2, h3, h4, h5, h6") ||
-        isDescendantOf(el, "p") ||
-        isDescendantOf(el, "li")
-      )
-        return false;
-      // descendants of an already-revealed card/container move with it
-      if (isDescendantOf(el, ".reveal, .card-lift")) return false;
-      // already has an entrance
-      if (el.classList.contains("reveal")) return false;
-      const t = typeOf(el);
-      if (!t) return false;
-      return true;
-    });
-
-    // DOM order
-    ordered.sort(domOrder);
-
-    let idx = 0;
-    ordered.forEach((el) => {
-      const t = typeOf(el);
-      if (!t) return;
-      const base = 120 + idx * 28;
-      idx++;
-      const typeCls = { text: "text-rise", card: "card-rise", media: "media-unveil", pop: "pop-spring", line: "line-draw", field: "field-rise" }[t as "text" | "card" | "media" | "pop" | "line" | "field"];
-      if (typeCls) el.classList.add(typeCls);
-      el.setAttribute("data-type", t);
-      switch (t) {
-        case "text":
-          reveal(el, { base, y: "14px", blur: true });
-          break;
-        case "card":
-          reveal(el, { base, y: "20px", s: ".97" });
-          el.classList.add("card-lift");
-          break;
-        case "media":
-          reveal(el, { base, y: "24px", s: ".96" });
-          el.classList.add("media-img");
-          break;
-        case "pop":
-          reveal(el, { base, s: ".94", y: "6px" });
-          break;
-        case "line":
-          reveal(el, { base, y: "0", s: "1" });
-          el.classList.add("line-draw");
-          break;
-        case "field":
-          reveal(el, { base, y: "10px", blur: false });
-          break;
-      }
-    });
-  }
-
-  /* ---------- Count-up numbers (tabular-nums, once on first view, skip years) ---------- */
-  function countUpNumbers() {
-    if (reduce) return;
-    const NUM_RE = /^[-+]?\d[\d,]*(\.\d+)?(%|x|\+|M|K|B)?$/;
-    const YEAR_RE = /^(19|20)\d{2}$/;
-    const nodes = $$(
-      "h1, h2, h3, h4, h5, h6, p, span, li, div, section",
-    ).filter((el) => {
-      const t = (el.textContent ?? "").trim();
-      if (!NUM_RE.test(t)) return false;
-      if (YEAR_RE.test(t)) return false;
-      // skip descendants already counted
-      if (el.closest("[data-counted]")) return false;
-      return true;
-    });
-    nodes.forEach((el) => {
-      const ioNum = io;
-      if (!ioNum) return;
-      const obs = new IntersectionObserver(
-        (entries) => {
-          const e = entries[0];
-          if (!e.isIntersecting) return;
-          obs.disconnect();
-          const text = (el.textContent ?? "").trim();
-          const m = text.match(/([-+]?\d[\d,]*)(\.\d+)?(%|x|\+|M|K|B)?/);
-          if (!m) return;
-          const raw = m[1].replace(/,/g, "");
-          const num = parseFloat(raw);
-          if (!Number.isFinite(num)) return;
-          const suffix = m[3] ?? "";
-          const decimals = m[2] ?? "";
-          el.setAttribute("data-counted", "1");
-          (el as HTMLElement).style.setProperty("font-variant-numeric", "tabular-nums");
-          const start = 0;
-          const dur = 900;
-          const t0 = performance.now();
-          const step = (now: number) => {
-            const k = clamp((now - t0) / dur, 0, 1);
-            const eased = 1 - Math.pow(1 - k, 3); // ease-out cubic
-            const val = start + (num - start) * eased;
-            el.textContent = val.toLocaleString(undefined, {
-              minimumFractionDigits: decimals ? decimals.length - 1 : 0,
-              maximumFractionDigits: decimals ? decimals.length - 1 : 0,
-            }) + suffix;
-            if (k < 1) requestAnimationFrame(step);
-            else el.textContent = text; // restore exact original
-          };
-          requestAnimationFrame(step);
-        },
-        { threshold: 0.15, rootMargin: "0px 0px -8% 0px" },
-      );
-      obs.observe(el);
-      addCleanup(() => obs.disconnect());
-    });
-  }
-
-  /* ---------- Pointer-following light on cards (rAF, feeds CSS vars) ---------- */
-  function pointerLight() {
-    if (reduce || typeof window === "undefined") return;
-    const cards = $$(".card-lift") as HTMLElement[];
-    if (!cards.length) return;
-    let mx = 0;
-    let my = 0;
-    let active = false;
-    let raf = 0;
-
-    const move = (e: PointerEvent) => {
-      const target = e.target as Element | null;
-      const card = target?.closest(".card-lift");
-      if (!card) return;
-      const r = card.getBoundingClientRect();
-      mx = (e.clientX - r.left) / r.width;
-      my = (e.clientY - r.top) / r.height;
-      if (!active) {
-        active = true;
-        raf = requestAnimationFrame(tick);
-      }
-    };
-
-    const tick = () => {
-      cards.forEach((c) => {
-        c.style.setProperty("--lx", String(mx));
-        c.style.setProperty("--ly", String(my));
-      });
-      raf = requestAnimationFrame(tick);
-    };
-
-    cards.forEach((c) => {
-      c.addEventListener("pointermove", move);
-    });
-    addCleanup(() => {
-      cards.forEach((c) => {
-        c.removeEventListener("pointermove", move);
-        c.style.removeProperty("--lx");
-        c.style.removeProperty("--ly");
-      });
-      if (raf) cancelAnimationFrame(raf);
-    });
-  }
-
-  /* ---------- Magnetic buttons via real JS spring ---------- */
-  function magneticButtons() {
-    if (reduce) return;
-    const btns = $$(".btn:not(.btn-wide)");
-    const stiffness = 260;
-    const damping = 22;
-    btns.forEach((button) => {
-      const b = button as HTMLElement;
-      let tx = 0;
-      let ty = 0;
-      let vx = 0;
-      let vy = 0;
-      let raf = 0;
-      let active = false;
-
-      const spring = () => {
-        const dt = 0.016;
-        const ax = -stiffness * tx - damping * vx;
-        const ay = -stiffness * ty - damping * vy;
-        vx += ax * dt;
-        vy += ay * dt;
-        tx += vx * dt;
-        ty += vy * dt;
-        const settled =
-          Math.abs(vx) < 0.01 && Math.abs(vy) < 0.01 && Math.abs(tx) < 0.01 && Math.abs(ty) < 0.01;
-        b.style.translate = `${tx.toFixed(2)}px ${ty.toFixed(2)}px`;
-        if (settled) {
-          active = false;
-          raf = 0;
-          b.style.translate = "";
-        } else {
-          raf = requestAnimationFrame(spring);
-        }
-      };
-
-      const onMove = (e: PointerEvent) => {
-        const r = b.getBoundingClientRect();
-        const dx = ((e.clientX - (r.left + r.width / 2)) / r.width) * 14;
-        const dy = ((e.clientY - (r.top + r.height / 2)) / r.height) * 14;
-        tx = clamp(dx, -14, 14);
-        ty = clamp(dy, -14, 14);
-        if (!active) {
-          active = true;
-          raf = requestAnimationFrame(spring);
-        }
-      };
-      const onLeave = () => {
-        tx = 0;
-        ty = 0;
-        vx = 0;
-        vy = 0;
-        if (!active) {
-          active = true;
-          raf = requestAnimationFrame(spring);
-        }
-      };
-      b.addEventListener("pointermove", onMove);
-      b.addEventListener("pointerleave", onLeave);
-      addCleanup(() => {
-        b.removeEventListener("pointermove", onMove);
-        b.removeEventListener("pointerleave", onLeave);
-        b.style.translate = "";
-        if (raf) cancelAnimationFrame(raf);
-      });
-    });
-  }
-
-  /* ---------- Inline links: underline sweep ---------- */
-  function inlineLinkSweep() {
-    const links = $$("a:not(.nav-link):not(.foot-link):not(.btn)");
-    links.forEach((a) => {
-      const link = a as HTMLElement;
-      if (link.classList.contains("has-sweep")) return;
-      link.classList.add("has-sweep");
-      link.style.position = link.style.position || "relative";
-    });
-  }
-
-  /* ---------- Images: gentle zoom on hover (CSS) ---------- */
-  /* handled in CSS via .media-img:hover */
-
-  /* ---------- Hero parallax ---------- */
-  function heroParallax() {
-    const hero = $("#hero");
-    if (!hero || reduce) return;
-    let cols = $$(".parallax-col", hero);
-    if (!cols.length) {
-      const direct = Array.from(hero.children) as HTMLElement[];
-      direct.forEach((c) => c.classList.add("parallax-col"));
-      cols = $$(".parallax-col", hero);
-    }
-    if (!cols.length) return;
-    const run = (y: number) => {
-      const r = hero.getBoundingClientRect();
-      const p = clamp((innerHeight * 0.5 - (r.top - y)) / (r.height + innerHeight), -1, 1);
-      cols.forEach((c, i) => {
-        const el = c as HTMLElement;
-        const rate = 0.06 + i * 0.04;
-        el.style.setProperty("--py", String(p * rate * 60) + "px");
-        el.style.setProperty("--po", String(clamp(1 - Math.abs(p) * 0.35, 0.65, 1)));
-      });
-    };
-    onScrollFrame((y) => {
-      run(y);
-    });
-    run(scrollY);
-    addCleanup(() => {
-      cols.forEach((c) => {
-        (c as HTMLElement).style.removeProperty("--py");
-        (c as HTMLElement).style.removeProperty("--po");
-      });
-    });
-  }
-
-  /* ---------- Marquee: ease to stop on hover ---------- */
-  (() => {
-    const track = $(".animate-marquee") as HTMLElement | null;
-    const wrap = track?.closest(".marquee-wrap") as Element | null;
-    if (!track || !wrap || reduce) return;
-    track.classList.add("is-js");
-    let x = 0;
-    let mult = 1;
-    let goal = 1;
-    let loop = 0;
-    let last = 0;
-    let raf = 0;
-    const measure = () => {
-      loop = track.offsetWidth / 2;
-    };
-    measure();
-    const ro =
-      typeof ResizeObserver !== "undefined"
-        ? new ResizeObserver(measure)
-        : null;
-    if (ro) {
-      ro.observe(track);
-      addCleanup(() => ro.disconnect());
-    } else {
-      addEventListener("resize", measure, { passive: true });
-      addCleanup(() => removeEventListener("resize", measure));
-    }
-    const tick = (t: number) => {
-      const dt = Math.min(0.05, (t - (last || t)) / 1000);
-      last = t;
-      mult += (goal - mult) * (1 - Math.exp(-dt * 4.5));
-      if (loop > 0) {
-        x -= (loop / 22) * mult * dt;
-        if (x <= -loop) x += loop;
-        track.style.transform = `translate3d(${x.toFixed(2)}px,0,0)`;
-      }
-      raf = requestAnimationFrame(tick);
-    };
-    const start = () => {
-      if (!raf) {
-        last = 0;
-        raf = requestAnimationFrame(tick);
-      }
-    };
-    const stop = () => {
-      if (raf) cancelAnimationFrame(raf);
-      raf = 0;
-    };
-    const onEnter = (e: Event) => {
-      if ((e as PointerEvent).pointerType === "mouse") goal = 0;
-    };
-    const onLeave = () => {
-      goal = 1;
-    };
-    const obs =
-      typeof IntersectionObserver !== "undefined"
-        ? new IntersectionObserver(([e]) => (e.isIntersecting ? start() : stop()))
-        : null;
-    if (obs) {
-      obs.observe(wrap);
-      addCleanup(() => obs.disconnect());
-    } else {
-      start();
-    }
-    wrap.addEventListener("pointerenter", onEnter);
-    wrap.addEventListener("pointerleave", onLeave);
-    addCleanup(() => {
-      stop();
-      wrap.removeEventListener("pointerenter", onEnter);
-      wrap.removeEventListener("pointerleave", onLeave);
-    });
-  })();
-
   /* ---------- Eased anchor scrolling ---------- */
+  let glide = 0;
   const cancelGlide = () => {
     if (glide) {
       cancelAnimationFrame(glide);
@@ -791,6 +341,7 @@ export function initMotion(): () => void {
 
   /* ---------- Active nav link + pill ---------- */
   const links = $$(".nav-link");
+  let syncPill: () => void = () => {};
   if (typeof IntersectionObserver !== "undefined" && links.length) {
     const byId = new Map(
       links.map((a) => [a.getAttribute("href")?.slice(1) ?? "", a]),
@@ -1027,144 +578,10 @@ export function initMotion(): () => void {
     }
   }
 
-  /* ---------- Orchestrate everything ---------- */
-  ready.then(() => {
-    try {
-      if (!reduce) {
-        /* Hero: one orchestrated entrance under ~1.5s */
-        const heroLeft = $("#hero > div:first-child");
-        reveal($("header"), { base: 0, y: "-20px", s: ".985" });
-        splitWords(heroLeft ? $("h1", heroLeft) : null, { base: 180, step: 48 });
-        reveal(heroLeft?.querySelector(".space-y-8 > div"), {
-          base: 100,
-          y: "18px",
-          blur: true,
-        });
-        reveal(heroLeft?.querySelector(".space-y-8 > p"), {
-          base: 620,
-          lag: 120,
-          y: "22px",
-          blur: true,
-        });
-        reveal(heroLeft?.querySelector(":scope > .pt-8"), {
-          base: 860,
-          lag: 200,
-          y: "22px",
-        });
-        reveal($$("#hero > div:last-child .grid > div"), {
-          base: 400,
-          step: 110,
-          y: "44px",
-          s: ".96",
-        });
-        reveal($$("#hero .icon-btn"), {
-          base: 1060,
-          lag: 350,
-          step: 70,
-          y: "0px",
-          s: ".92",
-        });
-
-        /* Mission */
-        const about = $("#about");
-        reveal(about, { base: 0, y: "40px", s: ".97" });
-        scrubWords(about ? $("h2", about) : null);
-        reveal($$("#about > div:last-child > span"), {
-          base: 100,
-          step: 70,
-          lag: 150,
-          y: "16px",
-          blur: true,
-        });
-
-        /* Services */
-        splitWords($("#services h2"), { base: 0, step: 50 });
-        reveal($("#services > div:first-child > p"), {
-          base: 150,
-          lag: 200,
-          y: "18px",
-          blur: true,
-        });
-        reveal($$("#services > div:last-child > div"), {
-          base: 300,
-          step: 100,
-          y: "40px",
-          s: ".97",
-        });
-
-        /* Work */
-        splitWords($("#work h2"), { base: 0, step: 50 });
-        reveal($("#work > div:first-child > div"), {
-          base: 150,
-          lag: 200,
-          y: "18px",
-        });
-        reveal($("#work > div:last-child > div:first-child"), {
-          base: 300,
-          y: "48px",
-          s: ".97",
-        });
-        reveal($$("#work > div:last-child > div:last-child > div"), {
-          base: 300,
-          step: 120,
-          y: "48px",
-          s: ".97",
-        });
-
-        /* Contact + footer */
-        reveal($("#contact"), { base: 0, y: "36px", s: ".975" });
-        splitWords($("#contact h2"), { base: 0, step: 35, lag: 100 });
-        reveal($("#contact h2 + p"), {
-          base: 200,
-          lag: 300,
-          y: "16px",
-          blur: true,
-        });
-        reveal($$("#contact-form > *"), {
-          base: 280,
-          lag: 400,
-          step: 90,
-          y: "24px",
-        });
-        reveal($("footer"), { base: 0, y: "18px" });
-
-        /* Hover hooks */
-        $$(
-          "#services > div:last-child > div, #work > div:last-child > div:last-child > div, #work > div:last-child > div:first-child",
-        ).forEach((c) => c.classList.add("card-lift"));
-        $$("#hero .reveal").forEach((c) => {
-          if (c.querySelector(".media-img")) c.classList.add("zoom-host");
-        });
-
-        /* Auto-choreograph everything remaining */
-        autoAnimate();
-
-        /* Count-up numbers */
-        countUpNumbers();
-
-        /* Pointer-following light on cards */
-        pointerLight();
-
-        /* Magnetic buttons */
-        magneticButtons();
-
-        /* Inline link sweep */
-        inlineLinkSweep();
-
-        /* Hero parallax */
-        heroParallax();
-      }
-    } catch {
-      console.warn("Motion setup failed; showing content without animation.");
-      root.classList.add("no-motion");
-    }
-  });
-
   hubRequest();
 
   return () => {
     cleanups.forEach((fn) => fn());
-    if (io) io.disconnect();
     root.classList.remove("js", "no-motion");
     initialized = false;
   };
