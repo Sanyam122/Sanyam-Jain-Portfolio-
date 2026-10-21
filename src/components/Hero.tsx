@@ -2,10 +2,11 @@ import { motion } from "motion/react";
 import {
   hover,
   mountReveal,
-  scrollReveal as scrollRevealHelper,
   tap,
   useReducedMotion,
 } from "../lib/motion";
+import { InView } from "./motion-primitives/InView";
+import { TextEffect } from "./motion-primitives/TextEffect";
 
 const GITHUB_SVG = (
   <svg
@@ -58,8 +59,6 @@ const X_SVG = (
 export default function Hero() {
   const reduced = useReducedMotion();
 
-  const scrollReveal = scrollRevealHelper(reduced);
-
   const imageHover = reduced ? {} : { whileHover: hover.image };
   const iconHover = reduced ? {} : { whileHover: hover.pop, whileTap: tap.icon };
   const btnHover = reduced ? {} : { whileHover: hover.scale, whileTap: tap.press };
@@ -82,12 +81,15 @@ export default function Hero() {
           </motion.div>
 
           {/* Huge Tight Headline */}
-          <motion.h1
-            {...mountReveal(reduced, 0.16)}
+          <TextEffect
+            as="h1"
+            per="char"
+            preset="fade"
+            delay={0.16}
             className="text-[56px] sm:text-[84px] xl:text-[88px] min-[1400px]:text-[100px] font-medium break-words text-[#222222] headline-tight tracking-[-0.04em]"
           >
             Hi, I'm a Full Stack Developer
-          </motion.h1>
+          </TextEffect>
 
           {/* Muted 2-line paragraph */}
           <motion.p
@@ -118,8 +120,7 @@ export default function Hero() {
         {/* Row 1: Profile Card + Portrait Card */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 flex-1">
           {/* Profile Card */}
-          <motion.div
-            {...scrollReveal}
+          <InView
             className="bg-white rounded-[32px] p-7 flex flex-col justify-between border border-black/[0.03] min-h-[300px] shadow-card"
           >
             <div className="flex-1 flex flex-col">
@@ -158,11 +159,10 @@ export default function Hero() {
               </span>
               <span className="text-[12px] text-[#777777] font-medium">UTC+5:30</span>
             </div>
-          </motion.div>
+          </InView>
 
           {/* Portrait Card */}
-          <motion.div
-            {...scrollReveal}
+          <InView
             className="bg-white rounded-[32px] overflow-hidden border border-black/[0.03] relative min-h-[300px] group shadow-card"
           >
             <motion.img
@@ -177,14 +177,13 @@ export default function Hero() {
               <span className="text-[13px] font-medium text-[#222222]">Full Stack Developer</span>
               <span className="w-2 h-2 rounded-full bg-[#2F9FB3]"></span>
             </div>
-          </motion.div>
+          </InView>
         </div>
 
         {/* Row 2: Violet Gradient Card + Socials Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 items-stretch">
           {/* Violet Gradient Card */}
-          <motion.div
-            {...scrollReveal}
+          <InView
             className="sm:col-span-8 violet-gradient-card rounded-[32px] p-7 text-white flex flex-col justify-between min-h-[190px] shadow-card"
           >
             <p className="text-[17px] font-medium tracking-tight text-white/95">
@@ -204,11 +203,10 @@ export default function Hero() {
                 <span className="text-[17px] font-bold tracking-widest uppercase text-white/90">Weather IQ</span>
               </div>
             </div>
-          </motion.div>
+          </InView>
 
           {/* 2x3 Grid of Social Icon Buttons */}
-          <motion.div
-            {...scrollReveal}
+          <InView
             className="sm:col-span-4 bg-white rounded-[32px] p-5 border border-black/[0.03] grid grid-cols-2 gap-3 items-center justify-items-center shadow-card"
           >
             {/* GitHub */}
@@ -259,7 +257,7 @@ export default function Hero() {
             >
               {X_SVG}
             </motion.a>
-          </motion.div>
+          </InView>
         </div>
       </motion.div>
     </section>

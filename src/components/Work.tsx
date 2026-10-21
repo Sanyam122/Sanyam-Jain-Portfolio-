@@ -1,38 +1,26 @@
 import { motion } from "motion/react";
 import stayhubImg from "../assets/stayhub.png";
-import {
-  hover,
-  scrollReveal,
-  tap,
-  useReducedMotion,
-} from "../lib/motion";
+import { hover, tap, useReducedMotion } from "../lib/motion";
+import { InView } from "./motion-primitives/InView";
 
 export default function Work() {
   const reduced = useReducedMotion();
 
-  const reveal = scrollReveal(reduced);
   const cardHover = reduced ? {} : { whileHover: hover.lift, whileTap: tap.card };
   const imageHover = reduced ? {} : { whileHover: hover.image };
   const btnHover = reduced ? {} : { whileHover: hover.scale, whileTap: tap.press };
 
   return (
-    <motion.section
-      id="work"
-      {...reveal}
-      className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start"
-    >
+    <InView as="section" id="work" className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
       {/* Left Column (Sticky) */}
-      <motion.div
-        {...scrollReveal(reduced, 0.06)}
-        className="lg:col-span-4 lg:sticky lg:top-8 pt-4 space-y-6"
-      >
+      <InView as="div" className="lg:col-span-4 lg:sticky lg:top-8 pt-4 space-y-6" transition={{ delay: 0.06 }}>
         <motion.h2
-          {...scrollReveal(reduced, 0.12)}
+          transition={{ delay: 0.12 }}
           className="text-[42px] md:text-[50px] font-medium text-[#222222] subhead-tight"
         >
           Selected work
         </motion.h2>
-        <motion.div {...scrollReveal(reduced, 0.24)}>
+        <motion.div transition={{ delay: 0.24 }}>
           <motion.a
             {...btnHover}
             href="https://github.com/your-username?tab=repositories"
@@ -43,16 +31,14 @@ export default function Work() {
             See All
           </motion.a>
         </motion.div>
-      </motion.div>
+      </InView>
 
       {/* Right Column: Featured + 2-Column Projects */}
-      <motion.div
-        {...scrollReveal(reduced, 0.16)}
-        className="lg:col-span-8 space-y-6"
-      >
+      <InView as="div" className="lg:col-span-8 space-y-6" transition={{ delay: 0.16 }}>
         {/* Full-Width Featured Card */}
-        <motion.div
-          {...scrollReveal(reduced, 0.28)}
+        <InView
+          as="div"
+          transition={{ delay: 0.28 }}
           {...cardHover}
           className="bg-white rounded-[40px] p-6 md:p-8 border border-black/[0.03] shadow-card"
         >
@@ -80,16 +66,14 @@ export default function Work() {
               React frontend
             </span>
           </div>
-        </motion.div>
+        </InView>
 
         {/* 2-Column Project Grid */}
-        <motion.div
-          {...scrollReveal(reduced, 0.4)}
-          className="grid grid-cols-1 md:grid-cols-2 gap-6"
-        >
+        <InView as="div" transition={{ delay: 0.4 }} className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Project 1: ZENPOINT */}
-          <motion.div
-            {...scrollReveal(reduced, 0.48)}
+          <InView
+            as="div"
+            transition={{ delay: 0.48 }}
             {...cardHover}
             className="bg-white rounded-[32px] p-6 border border-black/[0.03] flex flex-col justify-between shadow-card"
           >
@@ -119,14 +103,15 @@ export default function Work() {
                 </span>
               </div>
             </div>
-          </motion.div>
+          </InView>
 
           {/* Project 2: PAYU */}
-          <motion.a
+          <InView
+            as="a"
             href="https://stayhub-dgq1.onrender.com/listings"
             target="_blank"
             rel="noopener noreferrer"
-            {...scrollReveal(reduced, 0.56)}
+            transition={{ delay: 0.56 }}
             {...cardHover}
             className="bg-white rounded-[32px] p-6 border border-black/[0.03] flex flex-col justify-between block shadow-card"
           >
@@ -156,9 +141,9 @@ export default function Work() {
                 </span>
               </div>
             </div>
-          </motion.a>
-        </motion.div>
-      </motion.div>
-    </motion.section>
+          </InView>
+        </InView>
+      </InView>
+    </InView>
   );
 }

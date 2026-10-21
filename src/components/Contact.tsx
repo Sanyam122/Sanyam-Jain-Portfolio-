@@ -1,13 +1,13 @@
 import { motion } from "motion/react";
 import { useRef, useState } from "react";
-import { hover, scrollReveal, tap, useReducedMotion } from "../lib/motion";
+import { hover, tap, useReducedMotion } from "../lib/motion";
+import { InView } from "./motion-primitives/InView";
 
 const CONTACT_EMAIL = "jainsanyam441@gmail.com";
 
 export default function Contact() {
   const reduced = useReducedMotion();
 
-  const reveal = scrollReveal(reduced);
   const btnHover = reduced ? {} : { whileHover: hover.scale, whileTap: tap.press };
 
   const [busy, setBusy] = useState(false);
@@ -59,25 +59,27 @@ export default function Contact() {
   };
 
   return (
-    <motion.section
+    <InView
+      as="section"
       id="contact"
-      {...reveal}
       className="w-full contact-gradient-card rounded-[32px] p-8 sm:p-14 md:p-20 flex justify-center border border-black/[0.04] shadow-elevated"
     >
       <div className="w-full max-w-[840px] text-center space-y-8">
         <div className="space-y-4">
-          <motion.h2
-            {...scrollReveal(reduced, 0.06)}
+          <InView
+            as="h2"
+            transition={{ delay: 0.06 }}
             className="text-[36px] sm:text-[46px] md:text-[52px] font-medium text-[#222222] subhead-tight"
           >
             Contact with me to sizzle your project
-          </motion.h2>
-          <motion.p
-            {...scrollReveal(reduced, 0.16)}
+          </InView>
+          <InView
+            as="p"
+            transition={{ delay: 0.16 }}
             className="text-[16px] sm:text-[18px] text-[#777777] max-w-[620px] mx-auto leading-relaxed"
           >
             Feel free to contact me if having any questions. I'm available for new projects or just for chatting.
-          </motion.p>
+          </InView>
         </div>
 
         {status && (
@@ -96,18 +98,14 @@ export default function Contact() {
         <motion.form
           id="contact-form"
           ref={formRef}
-          {...scrollReveal(reduced, 0.28)}
           onSubmit={onSubmit}
           className="space-y-4 pt-4 text-left"
           action="#"
           method="post"
         >
-          <motion.div
-            {...scrollReveal(reduced, 0.38)}
-            className="grid grid-cols-1 sm:grid-cols-2 gap-4"
-          >
+          <InView as="div" transition={{ delay: 0.28 }} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <motion.input
-              {...scrollReveal(reduced, 0.44)}
+              transition={{ delay: 0.44 }}
               type="text"
               id="name"
               name="name"
@@ -119,7 +117,7 @@ export default function Contact() {
               className="w-full px-6 py-4 rounded-full bg-white/70 backdrop-blur-md border border-white/80 text-[#222222] placeholder-[#888888] focus:outline-none focus:ring-2 focus:ring-[#6C63E8]/40 field text-[15px]"
             />
             <motion.input
-              {...scrollReveal(reduced, 0.5)}
+              transition={{ delay: 0.5 }}
               type="email"
               id="email"
               name="email"
@@ -130,10 +128,10 @@ export default function Contact() {
               disabled={busy}
               className="w-full px-6 py-4 rounded-full bg-white/70 backdrop-blur-md border border-white/80 text-[#222222] placeholder-[#888888] focus:outline-none focus:ring-2 focus:ring-[#6C63E8]/40 field text-[15px]"
             />
-          </motion.div>
-          <motion.div {...scrollReveal(reduced, 0.56)}>
+          </InView>
+          <InView as="div" transition={{ delay: 0.56 }}>
             <motion.textarea
-              {...scrollReveal(reduced, 0.62)}
+              transition={{ delay: 0.62 }}
               rows={5}
               id="message"
               name="message"
@@ -143,8 +141,8 @@ export default function Contact() {
               disabled={busy}
               className="w-full p-6 rounded-[28px] bg-white/70 backdrop-blur-md border border-white/80 text-[#222222] placeholder-[#888888] focus:outline-none focus:ring-2 focus:ring-[#6C63E8]/40 field text-[15px] resize-none"
             />
-          </motion.div>
-          <motion.div {...scrollReveal(reduced, 0.68)}>
+          </InView>
+          <InView as="div" transition={{ delay: 0.68 }}>
             <input
               type="text"
               name="_gotcha"
@@ -164,9 +162,9 @@ export default function Contact() {
             >
               <span id="submit-label">{busy ? "Sending…" : "Submit"}</span>
             </motion.button>
-          </motion.div>
+          </InView>
         </motion.form>
       </div>
-    </motion.section>
+    </InView>
   );
 }

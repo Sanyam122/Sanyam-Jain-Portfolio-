@@ -1,5 +1,6 @@
 import { motion } from "motion/react";
-import { hover, scrollReveal, tap, useReducedMotion } from "../lib/motion";
+import { hover, tap, useReducedMotion } from "../lib/motion";
+import { InView } from "./motion-primitives/InView";
 
 const FRONTEND_ICON = (
   <svg
@@ -88,73 +89,62 @@ const SERVICES = [
 export default function Services() {
   const reduced = useReducedMotion();
 
-  const reveal = scrollReveal(reduced);
   const cardHover = reduced
     ? {}
     : { whileHover: hover.lift, whileTap: tap.card };
   const iconHover = reduced ? {} : { whileHover: { scale: 1.1 } };
 
   return (
-    <motion.section
-      id='services'
-      {...reveal}
-      className='grid grid-cols-1 lg:grid-cols-12 gap-8 items-start'
-    >
+    <InView as="section" id="services" className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
       {/* Services Left Column */}
-      <motion.div
-        {...scrollReveal(reduced, 0.06)}
-        className='lg:col-span-4 lg:sticky lg:top-8 pt-4'
-      >
+      <InView as="div" className="lg:col-span-4 lg:sticky lg:top-8 pt-4" transition={{ delay: 0.06 }}>
         <motion.h2
-          {...scrollReveal(reduced, 0.12)}
-          className='text-[42px] md:text-[50px] font-medium text-[#222222] subhead-tight'
+          className="text-[42px] md:text-[50px] font-medium text-[#222222] subhead-tight"
         >
           How Can I<br />
           Assist You?
         </motion.h2>
         <motion.p
-          {...scrollReveal(reduced, 0.22)}
-          className='mt-4 text-[16px] text-[#777777] max-w-[320px]'
+          className="mt-4 text-[16px] text-[#777777] max-w-[320px]"
+          transition={{ delay: 0.22 }}
         >
           End-to-end development, from clean interfaces to reliable APIs, built
           to grow with your product.
         </motion.p>
-      </motion.div>
+      </InView>
 
       {/* Services Right Column: 2x2 Grid of Cards */}
-      <motion.div
-        {...scrollReveal(reduced, 0.16)}
-        className='lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-6'
-      >
+      <InView as="div" className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-6" transition={{ delay: 0.16 }}>
         {SERVICES.map((service, i) => (
-          <motion.div
+          <InView
             key={service.number}
-            {...scrollReveal(reduced, 0.28 + i * 0.06)}
+            as="div"
+            transition={{ delay: 0.28 + i * 0.06 }}
             {...cardHover}
-            className='bg-white rounded-[32px] p-8 border border-black/[0.03] flex flex-col justify-between min-h-[260px] shadow-card'
+            className="bg-white rounded-[32px] p-8 border border-black/[0.03] flex flex-col justify-between min-h-[260px] shadow-card"
           >
-            <div className='flex items-start gap-5'>
+            <div className="flex items-start gap-5">
               <motion.div
                 {...iconHover}
-                className='w-12 h-12 rounded-full bg-[#EEEEF6] flex-shrink-0 flex items-center justify-center text-[#6C63E8]'
+                className="w-12 h-12 rounded-full bg-[#EEEEF6] flex-shrink-0 flex items-center justify-center text-[#6C63E8]"
               >
                 {service.icon}
               </motion.div>
-              <p className='text-[14px] text-[#777777] leading-relaxed'>
+              <p className="text-[14px] text-[#777777] leading-relaxed">
                 {service.body}
               </p>
             </div>
-            <div className='pt-8 flex items-baseline justify-between border-t border-black/[0.04]'>
-              <h3 className='text-[24px] font-medium text-[#222222] tracking-tight'>
+            <div className="pt-8 flex items-baseline justify-between border-t border-black/[0.04]">
+              <h3 className="text-[24px] font-medium text-[#222222] tracking-tight">
                 {service.title}
               </h3>
-              <span className='text-[16px] font-semibold text-[#777777]'>
+              <span className="text-[16px] font-semibold text-[#777777]">
                 {service.number}
               </span>
             </div>
-          </motion.div>
+          </InView>
         ))}
-      </motion.div>
-    </motion.section>
+      </InView>
+    </InView>
   );
 }

@@ -1,10 +1,9 @@
-import { motion } from "motion/react";
-import { scrollReveal, tap, useReducedMotion } from "../lib/motion";
+import { tap, useReducedMotion } from "../lib/motion";
+import { InView } from "./motion-primitives/InView";
 
 export default function MissionCard() {
   const reduced = useReducedMotion();
 
-  const reveal = scrollReveal(reduced);
   const chipHover = reduced ? {} : { whileHover: { scale: 1.02 }, whileTap: tap.card };
   const skills = [
     { label: "REACT.JS", cls: "text-[26px] font-black tracking-tighter text-white/80 uppercase" },
@@ -16,32 +15,26 @@ export default function MissionCard() {
   ];
 
   return (
-    <motion.section
-      id="about"
-      {...reveal}
-      className="w-full bg-[#2F9FB3] rounded-[40px] p-8 md:p-14 text-white shadow-elevated"
-    >
+    <InView as="section" id="about" className="w-full bg-[#2F9FB3] rounded-[40px] p-8 md:p-14 text-white shadow-elevated">
       <div className="max-w-[1100px]">
-        <motion.h2
-          {...scrollReveal(reduced, 0.06)}
-          className="text-[32px] sm:text-[44px] md:text-[52px] font-medium leading-[1.08] tracking-[-0.03em] text-white"
-        >
+        <InView as="h2" className="text-[32px] sm:text-[44px] md:text-[52px] font-medium leading-[1.08] tracking-[-0.03em] text-white">
           I build reliable, user-friendly web products, from clean interfaces to solid backend logic, and I'm always learning to ship better software.
-        </motion.h2>
+        </InView>
       </div>
 
       <div className="mt-12 pt-8 border-t border-white/20 flex flex-wrap items-center justify-between gap-8">
         {skills.map((skill, i) => (
-          <motion.span
+          <InView
             key={skill.label}
-            {...scrollReveal(reduced, i * 0.05)}
+            as="span"
+            transition={{ delay: i * 0.05 }}
             {...chipHover}
             className={skill.cls}
           >
             {skill.label}
-          </motion.span>
+          </InView>
         ))}
       </div>
-    </motion.section>
+    </InView>
   );
 }

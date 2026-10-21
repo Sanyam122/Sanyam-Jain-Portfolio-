@@ -1,19 +1,16 @@
 import { motion } from "motion/react";
-import { scrollReveal, useReducedMotion } from "../lib/motion";
+import { useReducedMotion } from "../lib/motion";
+import { InView } from "./motion-primitives/InView";
 
 export default function Footer() {
   const reduced = useReducedMotion();
 
-  const reveal = scrollReveal(reduced);
   const linkPress = reduced ? {} : { whileTap: { scale: 0.98 } };
 
   return (
-    <motion.footer
-      {...reveal}
-      className='w-full bg-white rounded-[24px] px-8 py-8 flex flex-col md:flex-row items-center justify-between border border-black/[0.03] gap-4 shadow-card'
-    >
+    <InView as="footer" className='w-full bg-white rounded-[24px] px-8 py-8 flex flex-col md:flex-row items-center justify-between border border-black/[0.03] gap-4 shadow-card'>
       <motion.div
-        {...scrollReveal(reduced, 0.06)}
+        transition={{ delay: 0.06 }}
         className='flex items-center gap-3'
       >
         <div className='w-8 h-8 rounded-full bg-[#222222] flex items-center justify-center text-white font-bold text-sm'>
@@ -25,7 +22,7 @@ export default function Footer() {
       </motion.div>
 
       <motion.div
-        {...scrollReveal(reduced, 0.14)}
+        transition={{ delay: 0.14 }}
         className='flex items-center gap-6 text-[13px] font-semibold uppercase tracking-wider text-[#666666]'
       >
         <motion.a
@@ -57,6 +54,6 @@ export default function Footer() {
           Java backend
         </motion.a>
       </motion.div>
-    </motion.footer>
+    </InView>
   );
 }

@@ -36,13 +36,6 @@ export const stagger = {
   loose: 0.12, // spacious sections
 } as const;
 
-/* ── Scroll reveal configuration ────────────────────────────────────── */
-export const scroll = {
-  threshold: 0.12, // fraction visible before revealing
-  rootMargin: "0px 0px -12% 0px", // trigger slightly before viewport entry
-  once: true, // animate once, never repeat on re-entry
-} as const;
-
 /* ── Entrance variants ──────────────────────────────────────────────── */
 export const variants = {
   fadeInUp: {
@@ -120,25 +113,6 @@ export function useReducedMotion(): boolean {
 }
 
 /* ── Reveal props helpers ───────────────────────────────────────────── */
-/* Scroll reveal: animates once when the element enters the viewport. */
-export function scrollReveal(reduced: boolean, delay = 0) {
-  if (reduced) return {};
-  return {
-    initial: { opacity: 0, y: 24 },
-    whileInView: { opacity: 1, y: 0 },
-    viewport: {
-      margin: scroll.rootMargin,
-      amount: scroll.threshold,
-      once: scroll.once,
-    },
-    transition: {
-      duration: duration.entrance,
-      ease: ease.sheet,
-      delay,
-    },
-  };
-}
-
 /* Mount reveal: animates on mount (for above-fold content such as the hero). */
 export function mountReveal(reduced: boolean, delay = 0) {
   if (reduced) return {};
